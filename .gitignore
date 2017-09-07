@@ -13,6 +13,12 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+/packages
+web.config
+Release/
+Debug/
+obj/
+Log/
 
 # Windows shortcuts
 *.lnk
@@ -27,6 +33,7 @@ $RECYCLE.BIN/
 .DS_Store
 .AppleDouble
 .LSOverride
+
 
 # Thumbnails
 ._*
@@ -45,3 +52,4 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.cache
