@@ -31,7 +31,7 @@ namespace BIW_KSOA_Interface.Models
         public string thhbj { get; set; }
         public string danwbh { get; set; }
         public Nullable<double> hyj { get; set; }
-        public System.DateTime insertDate { get; set; }
+        public Nullable<System.DateTime> insertDate { get; set; }
         public bool flag { get; set; }
         public string orderId { get; set; }
     }

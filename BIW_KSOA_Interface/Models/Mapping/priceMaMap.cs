@@ -8,7 +8,7 @@ namespace BIW_KSOA_Interface.Models.Mapping
         public priceMaMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.gzid, t.dj_sn, t.insertDate, t.flag });
+            this.HasKey(t => new { t.gzid, t.dj_sn, t.flag });
 
             // Properties
             this.Property(t => t.gzid)

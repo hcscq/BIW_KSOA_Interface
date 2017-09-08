@@ -32,6 +32,7 @@ namespace BIW_KSOA_Interface.Common
             }
             return sb.ToString();
         }
+        //public class Batch
         public  class HaveNoData : Biw_ResultMsgModel
         {
             public HaveNoData()

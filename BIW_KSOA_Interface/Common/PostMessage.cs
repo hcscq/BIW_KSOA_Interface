@@ -21,5 +21,10 @@ namespace BIW_KSOA_Interface.Common
         {
             public List<Biw_PriceMaBiwMModel>  Body { get; set; }
         }
+        public class poSave:Biw_BasePostMsgModel
+        {
+            public Biw_PoModel Body{ get; set; }
+
+        }
     }
 }

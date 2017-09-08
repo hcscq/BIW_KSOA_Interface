@@ -8,6 +8,7 @@ using BIW_KSOA_Interface.Common;
 using System.Web.Script.Serialization;
 using System.Data.Entity.Validation;
 using System.Text;
+using System.Data.SqlClient;
 
 namespace BIW_KSOA_Interface.Controllers
 {
@@ -20,14 +21,14 @@ namespace BIW_KSOA_Interface.Controllers
         {
             return View();
         }
-        #region Header + Body(String) Mode Common Accept
+        #region Header + Body(String) Mode ---Common Accept
         //[HttpPost]
         //public JsonResult Biw(Biw_PostMsgModel msgModel)
         //{
         //    JsonResult jr = new JsonResult();
         //    jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
 
-        //    if (msgModel == null)
+        //    if (msgModel == null||msgModel.Body==null)
         //    {
         //        jr.Data = new ResultMessage.HaveNoData();
         //        return jr;
@@ -38,7 +39,7 @@ namespace BIW_KSOA_Interface.Controllers
         //    {
         //        case MessageId.SaveReturnPo:
         //            break;
-        //            //return saveReturnPo(msgModel.Body);
+        //            return saveReturnPo(msgModel.Body);
 
         //        default:break;
         //    }
@@ -46,6 +47,11 @@ namespace BIW_KSOA_Interface.Controllers
         //    return jr;
         //}
         #endregion
+        /// <summary>
+        /// 退供单 提交
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
         [HttpPost]
         public JsonResult saveReturnPo(PostMessage.saveReturnPo msgModel) 
          {
@@ -53,7 +59,7 @@ namespace BIW_KSOA_Interface.Controllers
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
             KSOANoModel result=null;
-            if (msgModel == null)
+            if (msgModel == null||msgModel.Body==null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
@@ -103,12 +109,17 @@ namespace BIW_KSOA_Interface.Controllers
             jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(result) };
             return jr;
         }
-        [HttpPost]
+        /// <summary>
+        /// 维价单 批量提交
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost] 
         public JsonResult priceMaSaveBatch(PostMessage.priceMaSaveBatch msgModel)
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null)
+            if (msgModel == null||msgModel.Body==null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
@@ -118,6 +129,7 @@ namespace BIW_KSOA_Interface.Controllers
             List<Biw_PriceMaBiwMModel> postList=msgModel.Body;
             string gzid;
             Random random=new Random();
+            List<KSOANoModel> resultList = new List<KSOANoModel>();
             for (int i = 0; i < postList.Count; i++)
             {
                 gzid = DateTime.Now.Ticks.ToString().Substring(0, 9).ToString() + (random.Next() % 99).ToString();
@@ -138,7 +150,8 @@ namespace BIW_KSOA_Interface.Controllers
                         priceMaKsoaModel.dj_sn = j;
                         priceMaKsoaModel.dj_sort = j;
                         priceMaKsoaModel.danwbh = postList[i].DList[j].supplierNo;
-
+                        priceMaKsoaModel.insertDate = DateTime.Now;
+                        #region 计算会员价
                         foreach (InsiderPrice current in Common.Common.insiderFavourInfo.OrderBy(it => it.thresholdValue))
                         {
                             if (current.thresholdValue == 0.0)
@@ -174,19 +187,71 @@ namespace BIW_KSOA_Interface.Controllers
                                 }
                             }
                         }
+                        #endregion
                         saveList.Add(priceMaKsoaModel);
 
                     }
-                    //saveList.Clear();
+                    try
+                    {
+                        using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                        {
+                            dbContext.priceMas.AddRange(saveList);
+                            dbContext.SaveChanges();
+                            dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid",gzid)
+                                                                    ,new SqlParameter("@djlxbs", "GSS")
+                                                                    ,new SqlParameter("@djbh",postList[i].priceWhNo)
+                                                                    ,new SqlParameter("@rq", DateTime.Now.ToString("yyyy-MM-dd"))
+                                                                    ,new SqlParameter("@username",postList[i].updateUser));
+                        }
+                    }
+                    catch (DbEntityValidationException e1)
+                    {
+                        Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
+                        resultList.Add(new KSOANoModel() {BiwNo=postList[i].priceWhNo,Msg= ResultMessage.GetEntityValidationErrorStr(e1),Success=false });
+                    }
+                    catch (Exception e1)
+                    {
+                        Logger.WriteLog(e1.Message);
+                        Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
+                        resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = e1.Message, Success = false });
+                    }
+                    saveList.Clear();
                 }
+            }
+
+            if (resultList.Count > 0)
+                jr.Data = new ResultMessage.ProcError() { Body = jsr.Serialize(resultList) };
+            else jr.Data = new ResultMessage.Successed();
+
+            return jr;
+        }
+        /// <summary>
+        /// 采购单 提交
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult poSave(PostMessage.poSave msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            KSOANoModel result = null;
+            if (msgModel == null||msgModel.Body==null)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
             }
             try
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    dbContext.priceMas.AddRange(saveList);
+                    dbContext.biw_porders_t.Add(msgModel.Body.GetM());
+                    dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
                     dbContext.SaveChanges();
-                    jr.Data = new ResultMessage.Successed();
+
+                    result=dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
+
                 }
             }
             catch (DbEntityValidationException e1)
@@ -202,6 +267,7 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
                 return jr;
             }
+            jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(result) };
             return jr;
         }
 

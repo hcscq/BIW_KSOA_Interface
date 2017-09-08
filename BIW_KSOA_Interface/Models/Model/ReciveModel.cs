@@ -9,7 +9,8 @@ namespace BIW_KSOA_Interface.Models
     {
 
         public List<Biw_ReturnPoD> list { get; set; }
-        public Biw_ReturnPoM GetM() {
+        public Biw_ReturnPoM GetM()
+        {
             return new Biw_ReturnPoM()
             {
                 ReturnPoNo = this.ReturnPoNo,
@@ -128,6 +129,34 @@ namespace BIW_KSOA_Interface.Models
         {
             get;
             set;
+        }
+    }
+    [NotMapped]
+    public class Biw_PoModel : biw_porders_t
+    {
+        public List<biw_porders_d> dList;
+        public biw_porders_t GetM()
+        {
+            return new biw_porders_t()
+            {
+                poNo = this.poNo,
+                creatorName = this.creatorName,
+                checker = this.checker,
+                checktime = this.checktime,
+                arrivedate = this.arrivedate,
+                dptname = this.dptname,
+                createTime = this.createTime,
+                estimatedArrivalTime = this.estimatedArrivalTime,
+                supplierNo = this.supplierNo,
+                warehouseNo = this.warehouseNo,
+                acceptAddr = this.acceptAddr,
+                purchaseQty = this.purchaseQty,
+                purchaseAmount = this.purchaseAmount,
+                taxAmount = this.taxAmount,
+                totalAmount = this.totalAmount,
+                isValueadd = this.isValueadd,
+                isPrestore = this.isPrestore
+            };
         }
     }
 }
