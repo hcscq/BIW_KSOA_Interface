@@ -73,5 +73,13 @@ namespace BIW_KSOA_Interface.Common
                 Success = true;
             }
         }
+        public class ParamError : Biw_ResultMsgModel
+        {
+            public ParamError()
+            {
+                Message = "查询参数错误.";
+                Success = false;
+            }
+        }
     }
 }

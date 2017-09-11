@@ -126,9 +126,19 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\biw_data.cs" />
     <Compile Include="Models\BIW_KSOAContext.cs" />
+    <Compile Include="Models\biw_MSOnly.cs" />
     <Compile Include="Models\biw_porders_d.cs" />
     <Compile Include="Models\biw_porders_t.cs" />
+    <Compile Include="Models\biw_priceOnly.cs" />
+    <Compile Include="Models\biw_stockWS.cs" />
+    <Compile Include="Models\Mapping\biw_dataMap.cs" />
+    <Compile Include="Models\Mapping\biw_MSOnlyMap.cs" />
+    <Compile Include="Models\Mapping\biw_priceOnlyMap.cs" />
+    <Compile Include="Models\Mapping\biw_stockWSMap.cs" />
+    <Compile Include="Models\Mapping\mchkMap.cs" />
+    <Compile Include="Models\mchk.cs" />
     <Compile Include="Models\Model\KSOANoModel.cs" />
     <Compile Include="Models\Model\ReciveModel.cs" />
     <Compile Include="Models\Biw_test.cs" />

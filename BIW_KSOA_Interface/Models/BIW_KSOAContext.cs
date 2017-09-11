@@ -24,6 +24,11 @@ namespace BIW_KSOA_Interface.Models
         public DbSet<Biw_ReturnPoD> Biw_ReturnPoD { get; set; }
         public DbSet<Biw_ReturnPoM> Biw_ReturnPoM { get; set; }
         public DbSet<priceMa> priceMas { get; set; }
+        public DbSet<biw_data> biw_data { get; set; }
+        public DbSet<biw_MSOnly> biw_MSOnly { get; set; }
+        public DbSet<biw_priceOnly> biw_priceOnly { get; set; }
+        public DbSet<biw_stockWS> biw_stockWS { get; set; }
+        public DbSet<mchk> mchks { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -32,6 +37,14 @@ namespace BIW_KSOA_Interface.Models
             modelBuilder.Configurations.Add(new Biw_ReturnPoDMap());
             modelBuilder.Configurations.Add(new Biw_ReturnPoMMap());
             modelBuilder.Configurations.Add(new priceMaMap());
+
+            modelBuilder.Configurations.Add(new mchkMap());
+
+            modelBuilder.Configurations.Add(new biw_dataMap());
+            modelBuilder.Configurations.Add(new biw_MSOnlyMap());
+            modelBuilder.Configurations.Add(new biw_priceOnlyMap());
+            modelBuilder.Configurations.Add(new biw_stockWSMap());
+
 
         }
         public IEnumerable<TElement> ProcedureQuery<TElement>(string sp)

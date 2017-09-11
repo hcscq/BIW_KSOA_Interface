@@ -26,5 +26,13 @@ namespace BIW_KSOA_Interface.Common
             public Biw_PoModel Body{ get; set; }
 
         }
+        public class BiwQryData : Biw_BasePostMsgModel
+        {
+            public BiwQryModel Body { get; set; }
+        }
+        public class BiwQryDataBatch : Biw_BasePostMsgModel
+        {
+            public List<BiwQryModel> Body { get; set; }
+        }
     }
 }

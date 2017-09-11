@@ -100,6 +100,8 @@ namespace BIW_KSOA_Interface.Controllers
                 }
                 catch (Exception e1)
                 {
+                    while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                        e1 = e1.InnerException;
                     jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                     Logger.WriteLog(e1.Message);
                     Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
@@ -211,6 +213,8 @@ namespace BIW_KSOA_Interface.Controllers
                     }
                     catch (Exception e1)
                     {
+                        while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                            e1 = e1.InnerException;
                         Logger.WriteLog(e1.Message);
                         Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
                         resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = e1.Message, Success = false });
@@ -268,6 +272,102 @@ namespace BIW_KSOA_Interface.Controllers
                 return jr;
             }
             jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(result) };
+            return jr;
+        }
+        /// <summary>
+        /// 查询供应商信息
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        public JsonResult qry_supplierOnly(PostMessage.BiwQryData msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
+            }
+            string supplierName = string.IsNullOrWhiteSpace(msgModel.Body.supplierName) ? msgModel.Body.supplier_name : msgModel.Body.supplierName;
+            string supplierNo = (string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) ? msgModel.Body.supplier_no : msgModel.Body.supplierNo);
+            if (string.IsNullOrWhiteSpace(supplierName) && string.IsNullOrWhiteSpace(supplierNo))
+            {
+                jr.Data = new ResultMessage.ParamError();
+                Logger.WriteLog("Query param is empty.");
+                return jr;
+            }
+            //dwbh as supplier_id,danwbh as supplier_no,dwmch as supplier_name,rshtqx,isjh,jsfs 
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = from q in dbContext.mchks
+                                select new
+                                {
+                                    supplier_id = q.dwbh,
+                                    supplier_no = q.danwbh,
+                                    supplier_name = q.dwmch,
+                                    q.rshtqx,
+                                    q.isjh,
+                                    q.jsfs
+                                };
+                    if (!string.IsNullOrWhiteSpace(supplierName))
+                        query = query.Where(it => it.supplier_name.Contains(supplierName.Trim()));
+                    if (!string.IsNullOrWhiteSpace(supplierNo))
+                        query = query.Where(it => it.supplier_no.Equals(supplierNo.Trim()));
+
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("see the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+
+            return jr;
+        }
+        /// <summary>
+        /// 查询移动月销量(记得修改视图名称)
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        public JsonResult QryMonthSales(PostMessage.BiwQryDataBatch msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || msgModel.Body.Count() <= 0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var goodsNoArr = msgModel.Body.Select(it => it.goodsNo.Trim()).ToArray();
+                    var query = from q in dbContext.biw_MSOnly
+                                where (goodsNoArr).Contains(q.spbh)
+                                select q;
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
             return jr;
         }
 

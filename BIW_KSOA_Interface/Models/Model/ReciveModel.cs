@@ -159,4 +159,37 @@ namespace BIW_KSOA_Interface.Models
             };
         }
     }
+    public class BiwQryModel
+    {
+        public string supplier_no
+        {
+            get;
+            set;
+        }
+        public string supplier_name
+        {
+            get;
+            set;
+        }
+        public string supplierName
+        {
+            get;
+            set;
+        }
+        public string goods_no
+        {
+            get;
+            set;
+        }
+        public string supplierNo
+        {
+            get;
+            set;
+        }
+        public string goodsNo
+        {
+            get;
+            set;
+        }
+    }
 }
