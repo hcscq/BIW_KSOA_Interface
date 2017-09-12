@@ -163,20 +163,25 @@ namespace BIW_KSOA_Interface.Models
     {
         public string supplier_no
         {
-            get;
-            set;
+            get { return supplierNo; }
+            set { supplierNo = value; }
         }
         public string supplier_name
         {
-            get;
-            set;
-        }
-        public string supplierName
-        {
-            get;
-            set;
+            get { return supplierName; }
+            set { supplierName = value; }
         }
         public string goods_no
+        {
+            get { return goodsNo; }
+            set { goodsNo = value; }
+        }
+        public string goods_name
+        {
+            get { return goodsName; }
+            set { goodsName = value; }
+        }
+        public string supplierName
         {
             get;
             set;
@@ -187,6 +192,11 @@ namespace BIW_KSOA_Interface.Models
             set;
         }
         public string goodsNo
+        {
+            get;
+            set;
+        }
+        public string goodsName
         {
             get;
             set;

@@ -133,11 +133,14 @@
     <Compile Include="Models\biw_porders_t.cs" />
     <Compile Include="Models\biw_priceOnly.cs" />
     <Compile Include="Models\biw_stockWS.cs" />
+    <Compile Include="Models\gsspdyb.cs" />
     <Compile Include="Models\Mapping\biw_dataMap.cs" />
     <Compile Include="Models\Mapping\biw_MSOnlyMap.cs" />
     <Compile Include="Models\Mapping\biw_priceOnlyMap.cs" />
     <Compile Include="Models\Mapping\biw_stockWSMap.cs" />
+    <Compile Include="Models\Mapping\gsspdybMap.cs" />
     <Compile Include="Models\Mapping\mchkMap.cs" />
+    <Compile Include="Models\Mapping\spkfkMap.cs" />
     <Compile Include="Models\mchk.cs" />
     <Compile Include="Models\Model\KSOANoModel.cs" />
     <Compile Include="Models\Model\ReciveModel.cs" />
@@ -150,6 +153,7 @@
     <Compile Include="Models\Mapping\Biw_ReturnPoMMap.cs" />
     <Compile Include="Models\Mapping\priceMaMap.cs" />
     <Compile Include="Models\priceMa.cs" />
+    <Compile Include="Models\spkfk.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

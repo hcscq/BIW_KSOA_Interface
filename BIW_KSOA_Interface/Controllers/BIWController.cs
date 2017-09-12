@@ -279,6 +279,7 @@ namespace BIW_KSOA_Interface.Controllers
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
+        [HttpPost]
         public JsonResult qry_supplierOnly(PostMessage.BiwQryData msgModel)
         {
             JsonResult jr = new JsonResult();
@@ -289,9 +290,7 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
-            string supplierName = string.IsNullOrWhiteSpace(msgModel.Body.supplierName) ? msgModel.Body.supplier_name : msgModel.Body.supplierName;
-            string supplierNo = (string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) ? msgModel.Body.supplier_no : msgModel.Body.supplierNo);
-            if (string.IsNullOrWhiteSpace(supplierName) && string.IsNullOrWhiteSpace(supplierNo))
+            if (string.IsNullOrWhiteSpace(msgModel.Body.supplierName) && string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
             {
                 jr.Data = new ResultMessage.ParamError();
                 Logger.WriteLog("Query param is empty.");
@@ -312,10 +311,10 @@ namespace BIW_KSOA_Interface.Controllers
                                     q.isjh,
                                     q.jsfs
                                 };
-                    if (!string.IsNullOrWhiteSpace(supplierName))
-                        query = query.Where(it => it.supplier_name.Contains(supplierName.Trim()));
-                    if (!string.IsNullOrWhiteSpace(supplierNo))
-                        query = query.Where(it => it.supplier_no.Equals(supplierNo.Trim()));
+                    if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierName))
+                        query = query.Where(it => it.supplier_name.Contains(msgModel.Body.supplierName.Trim()));
+                    if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
+                        query = query.Where(it => it.supplier_no.Equals(msgModel.Body.supplierNo.Trim()));
 
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
 
@@ -338,6 +337,7 @@ namespace BIW_KSOA_Interface.Controllers
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
+        [HttpPost]
         public JsonResult QryMonthSales(PostMessage.BiwQryDataBatch msgModel)
         {
             JsonResult jr = new JsonResult();
@@ -370,6 +370,176 @@ namespace BIW_KSOA_Interface.Controllers
             }
             return jr;
         }
+        /// <summary>
+        /// 商品信息 批量查询
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult multi_qry_goods(PostMessage.BiwQryDataBatch msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || msgModel.Body.Count() <= 0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
+            }
+            try
+            {
+                string[] goodsNameArr;
+                string[] goodsNoArr = msgModel.Body
+                    .Where(it => !string.IsNullOrWhiteSpace(it.goodsNo))
+                    .Select(it => it.goodsNo.Trim()).Distinct().ToArray();
 
+                List<string> goodsNameList = msgModel.Body
+                    .Where(it => string.IsNullOrWhiteSpace(it.goodsNo) && !string.IsNullOrWhiteSpace(it.goodsName))
+                    .Select(it => (it.goodsName.Trim())).Distinct().ToList();
+
+                for (int i=0;i< goodsNameList.Count;i++)
+                    goodsNameList.RemoveAll(it=>it.Contains(goodsNameList[i])&&it!= goodsNameList[i]);
+
+                goodsNameArr = goodsNameList.ToArray();
+
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = (from q in dbContext.spkfks
+                                 //from p in goodsNoArr
+                                 where goodsNoArr.Contains(q.spbh)//q.spbh== p//
+                                 select new
+                                 {
+                                     q.spid,
+                                     goodsNo = q.spbh,
+                                     goodsName = q.spmch,
+                                     category1No = q.yjfl.Trim(),
+                                     category2No = q.ejfl.Trim(),
+                                     category3No = q.sjfl.Trim(),
+                                     originPlace = q.shpchd.Trim(),
+                                     goodsSpec = q.shpgg,
+                                     producer = q.shengccj,
+                                     packageunit = q.dw,
+                                     goodsPrice = q.jj,
+                                     taxRate = q.shlv,
+                                     withtaxPrice = q.hshjj,
+                                     commonName = q.tongym
+                                 })
+                                 .Union((from q in dbContext.spkfks
+                                         from p in goodsNameArr
+                                         where q.spmch.Contains(p)
+                                         select new
+                                         {
+                                             q.spid,
+                                             goodsNo = q.spbh,
+                                             goodsName = q.spmch,
+                                             category1No = q.yjfl.Trim(),
+                                             category2No = q.ejfl.Trim(),
+                                             category3No = q.sjfl.Trim(),
+                                             originPlace = q.shpchd.Trim(),
+                                             goodsSpec = q.shpgg,
+                                             producer = q.shengccj,
+                                             packageunit = q.dw,
+                                             goodsPrice = q.jj,
+                                             taxRate = q.shlv,
+                                             withtaxPrice = q.hshjj,
+                                             commonName = q.tongym
+                                         }));
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+            return jr;
+        }
+        /// <summary>
+        /// 最后进价 批量查询
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult getPurchasePriceOnly(PostMessage.BiwQryDataBatch msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || msgModel.Body.Count() <= 0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
+            }
+            try
+            {
+                List<string> goodsOnlyList = new List<string>();
+                List<BiwQryModel> goodsWithSupplierList = new List<BiwQryModel>();
+                foreach (var item in msgModel.Body)
+                {
+                    if (!string.IsNullOrWhiteSpace(item.goodsNo))
+                        if (!string.IsNullOrWhiteSpace(item.supplierNo))
+                            goodsWithSupplierList.Add(item);
+                        else goodsOnlyList.Add(item.goodsNo);
+                }
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = from q in dbContext.biw_priceOnly
+                                from p in goodsOnlyList
+                                where q.goods_no == p
+                                select new
+                                {
+                                    q.goods_id,
+                                    q.goods_no,
+                                    q.lastPPrice,
+                                    q.retailPrice,
+                                    mainSupplier = q.mainSupplier.Trim(),
+                                    SHLV = string.Empty,
+                                    supplierNo = string.Empty
+                                };
+                    if (goodsWithSupplierList.Count > 0)
+                    {
+                        goodsWithSupplierList.Join
+                            (
+                            dbContext.biw_priceOnly, g => g.supplierNo, q => q.goods_no, (g, q) =>
+                            new
+                            {
+                            }
+                            );
+                        query = query.Union
+                            (
+                            (from q in dbContext.biw_priceOnly
+                             from p in goodsWithSupplierList
+                             from r in dbContext.gsspdybs
+                             where (q.goods_no == p.goodsNo && q.goods_id == r.spid && r.dwbh == p.supplierNo)
+                             select new
+                             {
+                                 q.goods_id,
+                                 q.goods_no,
+                                 q.lastPPrice,
+                                 q.retailPrice,
+                                 mainSupplier = q.mainSupplier.Trim(),
+                                 SHLV = r.shlv.ToString(),
+                                 supplierNo = p.supplierNo
+                             })
+                            );
+                    }
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+            return jr;
+        }
     }
 }
