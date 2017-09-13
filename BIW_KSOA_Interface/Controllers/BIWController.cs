@@ -459,7 +459,7 @@ namespace BIW_KSOA_Interface.Controllers
             return jr;
         }
         /// <summary>
-        /// 最后进价 批量查询
+        /// 最后进价 批量查询 支持混合查询(记得修改视图名称)
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
@@ -502,19 +502,13 @@ namespace BIW_KSOA_Interface.Controllers
                                 };
                     if (goodsWithSupplierList.Count > 0)
                     {
-                        goodsWithSupplierList.Join
+                        List<string> goodsNoList = goodsWithSupplierList.Select(it =>it.goodsNo).ToList();
+                        List<string> supplierNoList = goodsWithSupplierList.Select(it => it.supplierNo).ToList();
+                        var list = query.Union
                             (
-                            dbContext.biw_priceOnly, g => g.supplierNo, q => q.goods_no, (g, q) =>
-                            new
-                            {
-                            }
-                            );
-                        query = query.Union
-                            (
-                            (from q in dbContext.biw_priceOnly
-                             from p in goodsWithSupplierList
+                            (from q in dbContext.biw_priceOnly 
                              from r in dbContext.gsspdybs
-                             where (q.goods_no == p.goodsNo && q.goods_id == r.spid && r.dwbh == p.supplierNo)
+                             where (q.goods_id == r.spid) &&goodsNoList.Contains(q.goods_no)&&supplierNoList.Contains(r.dwbh)
                              select new
                              {
                                  q.goods_id,
@@ -523,9 +517,12 @@ namespace BIW_KSOA_Interface.Controllers
                                  q.retailPrice,
                                  mainSupplier = q.mainSupplier.Trim(),
                                  SHLV = r.shlv.ToString(),
-                                 supplierNo = p.supplierNo
+                                 supplierNo = r.dwbh
                              })
-                            );
+                            ).AsEnumerable();
+                        list= from q in list
+                                join p in goodsWithSupplierList on new { goodsNo = q.goods_no, q.supplierNo } equals new { p.goodsNo, p.supplierNo }
+                                select q;
                     }
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
@@ -539,6 +536,22 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
                 return jr;
             }
+            return jr;
+        }
+        [HttpPost]
+        public JsonResult batch_qry_goods(PostMessage.BiwQryDataBatch msgModel) { return multi_qry_goods(msgModel); }
+        [HttpPost]
+        public JsonResult getSupplierGoodsInfo(PostMessage.BiwQryDataBatch msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || msgModel.Body.Count() <= 0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty.");
+                return jr;
+            }
+
             return jr;
         }
     }

@@ -31,6 +31,7 @@ namespace BIW_KSOA_Interface.Models
         public DbSet<mchk> mchks { get; set; }
         public DbSet<spkfk> spkfks { get; set; }
         public DbSet<gsspdyb> gsspdybs { get; set; }
+        public DbSet<biw_suppliergoods> biw_suppliergoods { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Configurations.Add(new biw_porders_dMap());
@@ -47,6 +48,7 @@ namespace BIW_KSOA_Interface.Models
             modelBuilder.Configurations.Add(new biw_stockWSMap());
             modelBuilder.Configurations.Add(new spkfkMap());
             modelBuilder.Configurations.Add(new gsspdybMap());
+            modelBuilder.Configurations.Add(new biw_suppliergoodsMap());
 
         }
         public IEnumerable<TElement> ProcedureQuery<TElement>(string sp)
