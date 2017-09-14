@@ -159,6 +159,7 @@ namespace BIW_KSOA_Interface.Models
             };
         }
     }
+    [NotMapped]
     public class BiwQryModel
     {
         public string supplier_no
@@ -202,4 +203,22 @@ namespace BIW_KSOA_Interface.Models
             set;
         }
     }
+    [NotMapped]
+    public class BiwQrySupplierGoodsModel
+    {
+        public string supplier_no
+        {
+            get { return supplierNo; }
+            set { supplierNo = value; }
+        }
+        public string supplierNo { get; set; }
+        public List<string> goods_no { get { return goodsNo; } set { goodsNo = value; } }
+        public List<string> goodsNo { get; set; }
+    }
+    [NotMapped]
+    public class BiwQryGoodsWitnMS
+    {
+        List<string> goodsId { get; set; }
+    }
+    
 }

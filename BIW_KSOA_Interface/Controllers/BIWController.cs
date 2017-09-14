@@ -540,18 +540,61 @@ namespace BIW_KSOA_Interface.Controllers
         }
         [HttpPost]
         public JsonResult batch_qry_goods(PostMessage.BiwQryDataBatch msgModel) { return multi_qry_goods(msgModel); }
+        /// <summary>
+        /// 查询供应商商品信息  可附带指定商品
+        /// {"action":"getSupplierGoodsInfo","body":{"supplierNo":"051","goodsNo":["206020005","204010026","204020001","204010094"]}}
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
         [HttpPost]
-        public JsonResult getSupplierGoodsInfo(PostMessage.BiwQryDataBatch msgModel)
+        public JsonResult getSupplierGoodsInfo(PostMessage.BiwQrySupplierGoods msgModel)
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null || msgModel.Body == null || msgModel.Body.Count() <= 0)
+            if (msgModel == null || msgModel.Body == null||string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = from q in dbContext.biw_suppliergoods
+                                where q.supplier_no != null&&msgModel.Body.supplierNo.Equals(q.supplier_no)
+                                select q;
+                    if (msgModel.Body.goodsNo != null && msgModel.Body.goodsNo.Count() > 0)
+                    {
+                        query = query.Where(it => msgModel.Body.goodsNo.Contains(it.goodsNo));
+                    }
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+
+            return jr;
+        }
+        [HttpPost]
+        public JsonResult getGoodsInfo(PostMessage.BiwQryGoodsWS msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
-
+            jr.Data = new ResultMessage.HaveNoData();
             return jr;
         }
     }

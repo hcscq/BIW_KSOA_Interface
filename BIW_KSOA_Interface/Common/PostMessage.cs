@@ -34,5 +34,13 @@ namespace BIW_KSOA_Interface.Common
         {
             public List<BiwQryModel> Body { get; set; }
         }
+        public class BiwQrySupplierGoods : Biw_BasePostMsgModel
+        {
+            public BiwQrySupplierGoodsModel Body { get; set; }
+        }
+        public class BiwQryGoodsWS : Biw_BasePostMsgModel
+        {
+            public BiwQryGoodsWitnMS Body { get; set; }
+        }
     }
 }
