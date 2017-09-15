@@ -8,7 +8,7 @@ namespace BIW_KSOA_Interface.Models.Mapping
         public Biw_ReturnPoMMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.ReturnPoNo, t.SupplierNo, t.CreatorName, t.CreatorPart, t.CreateDate, t.InsertDate });
+            this.HasKey(t => new { t.ReturnPoNo, t.SupplierNo, t.CreatorName, t.CreatorPart, t.CreateDate, t.InsertDate,t.Reason });
 
             // Properties
             this.Property(t => t.ReturnPoNo)

@@ -19,7 +19,8 @@ namespace BIW_KSOA_Interface.Models
                 CreatorPart = this.CreatorPart,
                 CreateDate = this.CreateDate,
                 InsertDate = this.InsertDate,
-                Note = this.Note
+                Note = this.Note,
+                Reason=this.Reason
             };
         }
     }

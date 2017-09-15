@@ -90,6 +90,13 @@ namespace BIW_KSOA_Interface.Controllers
                     dbContext.Biw_ReturnPoD.AddRange(msgModel.Body.list);
                     dbContext.SaveChanges();
                     result = dbContext.ProcedureQuery<KSOANoModel>("biw_Save_ReturnPo @returnPoNo='" + msgModel.Body.ReturnPoNo + "'").First();
+                    if (!result.Success)
+                    {
+                        Logger.WriteLog("Process Error:" + result.Msg);
+                        Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                        jr.Data = new ResultMessage.ProcError() { Body = result.Msg };
+                        return jr;
+                    }
 
                 }
                 catch (DbEntityValidationException e1)
