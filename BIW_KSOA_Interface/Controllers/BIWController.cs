@@ -53,13 +53,13 @@ namespace BIW_KSOA_Interface.Controllers
         /// <param name="msgModel"></param>
         /// <returns></returns>
         [HttpPost]
-        public JsonResult saveReturnPo(PostMessage.saveReturnPo msgModel) 
-         {
+        public JsonResult saveReturnPo(PostMessage.saveReturnPo msgModel)
+        {
 
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            KSOANoModel result=null;
-            if (msgModel == null||msgModel.Body==null)
+            KSOANoModel result = null;
+            if (msgModel == null || msgModel.Body == null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
@@ -102,7 +102,7 @@ namespace BIW_KSOA_Interface.Controllers
                 catch (DbEntityValidationException e1)
                 {
                     jr.Data = new ResultMessage.ProcError() { Message = ResultMessage.GetEntityValidationErrorStr(e1) };
-                    Logger.WriteLog("Body Data:" +jsr.Serialize(msgModel.Body));
+                    Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
                     return jr;
                 }
                 catch (Exception e1)
@@ -115,7 +115,7 @@ namespace BIW_KSOA_Interface.Controllers
                     return jr;
                 }
             }
-            jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(result) };
+            jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(result) };
             return jr;
         }
         /// <summary>
@@ -123,21 +123,21 @@ namespace BIW_KSOA_Interface.Controllers
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
-        [HttpPost] 
+        [HttpPost]
         public JsonResult priceMaSaveBatch(PostMessage.priceMaSaveBatch msgModel)
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null||msgModel.Body==null)
+            if (msgModel == null || msgModel.Body == null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
             List<priceMa> saveList = new List<priceMa>();
-            List<Biw_PriceMaBiwMModel> postList=msgModel.Body;
+            List<Biw_PriceMaBiwMModel> postList = msgModel.Body;
             string gzid;
-            Random random=new Random();
+            Random random = new Random();
             List<KSOANoModel> resultList = new List<KSOANoModel>();
             for (int i = 0; i < postList.Count; i++)
             {
@@ -206,17 +206,17 @@ namespace BIW_KSOA_Interface.Controllers
                         {
                             dbContext.priceMas.AddRange(saveList);
                             dbContext.SaveChanges();
-                            dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid",gzid)
-                                                                    ,new SqlParameter("@djlxbs", "GSS")
-                                                                    ,new SqlParameter("@djbh",postList[i].priceWhNo)
-                                                                    ,new SqlParameter("@rq", DateTime.Now.ToString("yyyy-MM-dd"))
-                                                                    ,new SqlParameter("@username",postList[i].updateUser));
+                            dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid", gzid)
+                                                                    , new SqlParameter("@djlxbs", "GSS")
+                                                                    , new SqlParameter("@djbh", postList[i].priceWhNo)
+                                                                    , new SqlParameter("@rq", DateTime.Now.ToString("yyyy-MM-dd"))
+                                                                    , new SqlParameter("@username", postList[i].updateUser));
                         }
                     }
                     catch (DbEntityValidationException e1)
                     {
                         Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
-                        resultList.Add(new KSOANoModel() {BiwNo=postList[i].priceWhNo,Msg= ResultMessage.GetEntityValidationErrorStr(e1),Success=false });
+                        resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = ResultMessage.GetEntityValidationErrorStr(e1), Success = false });
                     }
                     catch (Exception e1)
                     {
@@ -247,7 +247,7 @@ namespace BIW_KSOA_Interface.Controllers
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
             KSOANoModel result = null;
-            if (msgModel == null||msgModel.Body==null)
+            if (msgModel == null || msgModel.Body == null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty.");
@@ -261,7 +261,7 @@ namespace BIW_KSOA_Interface.Controllers
                     dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
                     dbContext.SaveChanges();
 
-                    result=dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
+                    result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
 
                 }
             }
@@ -404,15 +404,15 @@ namespace BIW_KSOA_Interface.Controllers
                     .Where(it => string.IsNullOrWhiteSpace(it.goodsNo) && !string.IsNullOrWhiteSpace(it.goodsName))
                     .Select(it => (it.goodsName.Trim())).Distinct().ToList();
 
-                for (int i=0;i< goodsNameList.Count;i++)
-                    goodsNameList.RemoveAll(it=>it.Contains(goodsNameList[i])&&it!= goodsNameList[i]);
+                for (int i = 0; i < goodsNameList.Count; i++)
+                    goodsNameList.RemoveAll(it => it.Contains(goodsNameList[i]) && it != goodsNameList[i]);
 
                 goodsNameArr = goodsNameList.ToArray();
 
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.spkfks
-                                 //from p in goodsNoArr
+                                     //from p in goodsNoArr
                                  where goodsNoArr.Contains(q.spbh)//q.spbh== p//
                                  select new
                                  {
@@ -509,13 +509,13 @@ namespace BIW_KSOA_Interface.Controllers
                                 };
                     if (goodsWithSupplierList.Count > 0)
                     {
-                        List<string> goodsNoList = goodsWithSupplierList.Select(it =>it.goodsNo).ToList();
+                        List<string> goodsNoList = goodsWithSupplierList.Select(it => it.goodsNo).ToList();
                         List<string> supplierNoList = goodsWithSupplierList.Select(it => it.supplierNo).ToList();
                         var list = query.Union
                             (
-                            (from q in dbContext.biw_priceOnly 
+                            (from q in dbContext.biw_priceOnly
                              from r in dbContext.gsspdybs
-                             where (q.goods_id == r.spid) &&goodsNoList.Contains(q.goods_no)&&supplierNoList.Contains(r.dwbh)
+                             where (q.goods_id == r.spid) && goodsNoList.Contains(q.goods_no) && supplierNoList.Contains(r.dwbh)
                              select new
                              {
                                  q.goods_id,
@@ -527,9 +527,9 @@ namespace BIW_KSOA_Interface.Controllers
                                  supplierNo = r.dwbh
                              })
                             ).AsEnumerable();
-                        list= from q in list
-                                join p in goodsWithSupplierList on new { goodsNo = q.goods_no, q.supplierNo } equals new { p.goodsNo, p.supplierNo }
-                                select q;
+                        list = from q in list
+                               join p in goodsWithSupplierList on new { goodsNo = q.goods_no, q.supplierNo } equals new { p.goodsNo, p.supplierNo }
+                               select q;
                     }
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
@@ -558,7 +558,7 @@ namespace BIW_KSOA_Interface.Controllers
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null || msgModel.Body == null||string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
+            if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.");
@@ -569,7 +569,7 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = from q in dbContext.biw_suppliergoods
-                                where q.supplier_no != null&&msgModel.Body.supplierNo.Equals(q.supplier_no)
+                                where q.supplier_no != null && msgModel.Body.supplierNo.Equals(q.supplier_no)
                                 select q;
                     if (msgModel.Body.goodsNo != null && msgModel.Body.goodsNo.Count() > 0)
                     {
@@ -590,6 +590,11 @@ namespace BIW_KSOA_Interface.Controllers
 
             return jr;
         }
+        /// <summary>
+        /// 商品库存查询 +移动月销量 +待入数量
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
         [HttpPost]
         public JsonResult getGoodsInfo(PostMessage.BiwQryGoodsWS msgModel)
         {
@@ -601,7 +606,76 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
-            jr.Data = new ResultMessage.HaveNoData();
+            if ( msgModel.Body.goodsId == null||msgModel.Body.goodsId.Count<=0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("GoodsNo array needed.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    string[] goodsIDList = (from q in dbContext.spkfks
+                                            where msgModel.Body.goodsId.Contains(q.spbh)
+                                            select new { q.spid }).Select(it => it.spid).ToArray();
+                    var query = from q in dbContext.biw_data
+                                where goodsIDList.Contains(q.spid)
+                                select q;
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+            return jr;
+        }
+        /// <summary>
+        /// 查询供应商商品信息 分页模式
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult qry_goods(PostMessage.BiwQryData msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) || msgModel.Body.pageSize <= 0 || msgModel.Body.pageNo < 0)
+            {
+                jr.Data = new ResultMessage.ParamError();
+                Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.Page size and page no must greater than 0.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = from q in dbContext.biw_suppliergoods
+                                where q.supplier_no == msgModel.Body.supplierNo
+                                select q;
+                    if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsNo))
+                        query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo);
+                    if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
+                        query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName));
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query.OrderBy(it=>it.spid).Skip((msgModel.Body.pageNo) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize)) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+
             return jr;
         }
     }
