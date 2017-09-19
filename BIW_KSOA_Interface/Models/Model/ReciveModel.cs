@@ -207,6 +207,8 @@ namespace BIW_KSOA_Interface.Models
         public int page_no { get { return pageNo; } set { pageNo = value; } }
         public int pageSize { get; set; }
         public int pageNo { get; set; }
+        public int qry_type { get { return qryType; } set { qryType = value; } }
+        public int qryType { get; set; }
     }
     [NotMapped]
     public class BiwQrySupplierGoodsModel
@@ -221,9 +223,13 @@ namespace BIW_KSOA_Interface.Models
         public List<string> goodsNo { get; set; }
     }
     [NotMapped]
-    public class BiwQryGoodsWitnMS
+    public class BiwQryGoodsWitnMSModel
     {
         public List<string> goodsId { get; set; }
+    }
+    [NotMapped]
+    public class BiwQryGoodsCategoryModel:biw_category
+    {        
     }
     
 }

@@ -638,6 +638,7 @@ namespace BIW_KSOA_Interface.Controllers
         }
         /// <summary>
         /// 查询供应商商品信息 分页模式
+        /// {"Action":"getGoodsInfo","Key":"TG0001","Time":"2017-08-22","Body":{"supplierNo":"051","goodsName":"云","pageNo":0,"pageSize":10}}
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
@@ -678,5 +679,130 @@ namespace BIW_KSOA_Interface.Controllers
 
             return jr;
         }
+        /// <summary>
+        ///查询供应商信息 按照 qry_type 查询 
+        /// {"Action":"qry_supplier","Key":"TG0001","Time":"2017-08-22","Body":{"supplierNo":"051","goodsName":"小糖医","qry_type":"4"}}
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult qry_supplier(PostMessage.BiwQryData msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null || msgModel.Body.qryType <= 0)
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty or qryType equal or less than 0.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    var query = from q in dbContext.biw_suppliergoods
+                                select new
+                                {
+                                    q.supplier_id,
+                                    q.supplier_no,
+                                    q.supplier_name,
+                                    q.rshtqx,
+                                    q.isjh,
+                                    q.jsfs,
+                                    q.goodsName,
+                                    q.goodsNo
+                                };
+                    switch (msgModel.Body.qryType)
+                    {
+                        case 1:
+                            if (string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
+                                jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param supplierNo." };
+                            else
+                                query = query.Where(it => it.supplier_no == msgModel.Body.supplierNo).Distinct();
+                            break;
+                        case 2:
+                            if (string.IsNullOrWhiteSpace(msgModel.Body.goodsNo))
+                                jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param goodsNo." };
+                            else
+                                query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo).Distinct();
+                            break;
+                        case 3:
+                            if (string.IsNullOrWhiteSpace(msgModel.Body.supplierName))
+                                jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param supplierName." };
+                            else
+                                query = query.Where(it =>it.supplier_name.Contains(msgModel.Body.supplierName)).Distinct();
+                            break;
+                        case 4:
+                            if (string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
+                                jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param goodsName." };
+                            else
+                                query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName)).Distinct();
+                            break;
+                        default:
+                            jr.Data = new ResultMessage.ParamError() { Body = "Unknown param value of 'qry_type'" };
+                            break;
+                    }
+                    if (jr.Data == null)
+                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+            return jr;
+        }
+        /// <summary>
+        /// 商品分类查询 按等级 或 分类编号
+        /// {"Action":"qry_category","Key":"TG0001","Time":"2017-08-22","Body":{"level":"3","category_no":"101"}}
+        /// </summary>
+        /// <param name="msgModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult qry_category(PostMessage.BiwQryGoodsCategory msgModel)
+        {
+            JsonResult jr = new JsonResult();
+            jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+            if (msgModel == null || msgModel.Body == null ||string.IsNullOrWhiteSpace(msgModel.Body.level))
+            {
+                jr.Data = new ResultMessage.HaveNoData();
+                Logger.WriteLog("Model is empty or Level is Null Or whiteSpace.");
+                return jr;
+            }
+            try
+            {
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                {
+                    if ((msgModel.Body.level.Equals("2") || msgModel.Body.level.Equals("3")) && string.IsNullOrWhiteSpace(msgModel.Body.category_no))
+                    {
+                        jr.Data = new ResultMessage.ParamError() { Body="CategoryNo can not be null when level is 2 or 3 "};
+                        return jr;
+                    }
+                    var query = from q in dbContext.biw_category
+                                where q.level==msgModel.Body.level
+                                select q;
+                    if (!string.IsNullOrWhiteSpace(msgModel.Body.category_no))
+                        query = query.Where(it=>it.category_no.Contains(msgModel.Body.category_no));
+                    jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(query) };
+                }
+            }
+            catch (Exception e1)
+            {
+                while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
+                    e1 = e1.InnerException;
+                jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
+                Logger.WriteLog(e1.Message);
+                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                return jr;
+            }
+
+            return jr;
+        }
+
     }
 }

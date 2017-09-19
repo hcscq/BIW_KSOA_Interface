@@ -40,7 +40,11 @@ namespace BIW_KSOA_Interface.Common
         }
         public class BiwQryGoodsWS : Biw_BasePostMsgModel
         {
-            public BiwQryGoodsWitnMS Body { get; set; }
+            public BiwQryGoodsWitnMSModel Body { get; set; }
+        }
+        public class BiwQryGoodsCategory : Biw_BasePostMsgModel
+        {
+            public BiwQryGoodsCategoryModel Body { get; set; }
         }
     }
 }
