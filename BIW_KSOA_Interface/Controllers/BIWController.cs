@@ -467,6 +467,7 @@ namespace BIW_KSOA_Interface.Controllers
         }
         /// <summary>
         /// 最后进价 批量查询 支持混合查询(记得修改视图名称)
+        /// {"Action":"SK10012","Body":[{"supplier_no":"LSS10050189","goods_no":"401990096"}],"Key":"GZ0001","Time":"2017-09-21 18:28:00"}
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
@@ -515,7 +516,8 @@ namespace BIW_KSOA_Interface.Controllers
                             (
                             (from q in dbContext.biw_priceOnly
                              from r in dbContext.gsspdybs
-                             where (q.goods_id == r.spid) && goodsNoList.Contains(q.goods_no) && supplierNoList.Contains(r.dwbh)
+                             join m in dbContext.mchks on r.dwbh equals m.dwbh
+                             where (q.goods_id == r.spid) && goodsNoList.Contains(q.goods_no) && supplierNoList.Contains(m.danwbh)
                              select new
                              {
                                  q.goods_id,
@@ -524,14 +526,16 @@ namespace BIW_KSOA_Interface.Controllers
                                  q.retailPrice,
                                  mainSupplier = q.mainSupplier.Trim(),
                                  SHLV = r.shlv.ToString(),
-                                 supplierNo = r.dwbh
+                                 supplierNo = m.danwbh
                              })
                             ).AsEnumerable();
-                        list = from q in list
+                        var list2 = (from q in list
                                join p in goodsWithSupplierList on new { goodsNo = q.goods_no, q.supplierNo } equals new { p.goodsNo, p.supplierNo }
-                               select q;
+                               select q).ToList();
+                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(list2) };
                     }
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    else
+                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
             }
             catch (Exception e1)
@@ -758,7 +762,7 @@ namespace BIW_KSOA_Interface.Controllers
             return jr;
         }
         /// <summary>
-        /// 商品分类查询 按等级 或 分类编号
+        /// 商品分类查询 按等级 或 分类编号(需要修改识图名称)
         /// {"Action":"qry_category","Key":"TG0001","Time":"2017-08-22","Body":{"level":"3","category_no":"101"}}
         /// </summary>
         /// <param name="msgModel"></param>
