@@ -139,6 +139,7 @@ namespace BIW_KSOA_Interface.Controllers
             string gzid;
             Random random = new Random();
             List<KSOANoModel> resultList = new List<KSOANoModel>();
+            int returnValue = -1;
             for (int i = 0; i < postList.Count; i++)
             {
                 gzid = DateTime.Now.Ticks.ToString().Substring(0, 9).ToString() + (random.Next() % 99).ToString();
@@ -206,7 +207,7 @@ namespace BIW_KSOA_Interface.Controllers
                         {
                             dbContext.priceMas.AddRange(saveList);
                             dbContext.SaveChanges();
-                            dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid", gzid)
+                            returnValue=dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid", gzid)
                                                                     , new SqlParameter("@djlxbs", "GSS")
                                                                     , new SqlParameter("@djbh", postList[i].priceWhNo)
                                                                     , new SqlParameter("@rq", DateTime.Now.ToString("yyyy-MM-dd"))
@@ -232,7 +233,7 @@ namespace BIW_KSOA_Interface.Controllers
 
             if (resultList.Count > 0)
                 jr.Data = new ResultMessage.ProcError() { Body = jsr.Serialize(resultList) };
-            else jr.Data = new ResultMessage.Successed();
+            else jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(returnValue) };
 
             return jr;
         }
