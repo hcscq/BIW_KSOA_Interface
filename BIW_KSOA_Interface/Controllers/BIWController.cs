@@ -529,10 +529,10 @@ namespace BIW_KSOA_Interface.Controllers
                                  supplierNo = m.danwbh
                              })
                             ).AsEnumerable();
-                        var list2 = (from q in list
-                               join p in goodsWithSupplierList on new { goodsNo = q.goods_no, q.supplierNo } equals new { p.goodsNo, p.supplierNo }
+                        list = (from q in list
+                               join p in goodsWithSupplierList on new { goodsNo = q.goods_no.Trim(), supplierNo=q.supplierNo.Trim() } equals new { goodsNo=p.goodsNo.Trim(), supplierNo=p.supplierNo.Trim() }
                                select q).ToList();
-                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(list2) };
+                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(list) };
                     }
                     else
                         jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
