@@ -9,6 +9,7 @@ using System.Web.Script.Serialization;
 using System.Data.Entity.Validation;
 using System.Text;
 using System.Data.SqlClient;
+using System.Data.Entity;
 
 namespace BIW_KSOA_Interface.Controllers
 {
@@ -309,7 +310,7 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = from q in dbContext.mchks
+                    var query = (from q in dbContext.mchks
                                 select new
                                 {
                                     supplier_id = q.dwbh,
@@ -318,7 +319,7 @@ namespace BIW_KSOA_Interface.Controllers
                                     q.rshtqx,
                                     q.isjh,
                                     q.jsfs
-                                };
+                                }).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierName))
                         query = query.Where(it => it.supplier_name.Contains(msgModel.Body.supplierName.Trim()));
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
@@ -361,9 +362,9 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var goodsNoArr = msgModel.Body.Select(it => it.goodsNo.Trim()).ToArray();
-                    var query = from q in dbContext.biw_MSOnly
+                    var query = (from q in dbContext.biw_MSOnly
                                 where (goodsNoArr).Contains(q.spbh)
-                                select q;
+                                select q).AsNoTracking();
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
             }
@@ -412,7 +413,7 @@ namespace BIW_KSOA_Interface.Controllers
 
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = (from q in dbContext.spkfks
+                    var query = ((from q in dbContext.spkfks
                                      //from p in goodsNoArr
                                  where goodsNoArr.Contains(q.spbh)//q.spbh== p//
                                  select new
@@ -451,7 +452,7 @@ namespace BIW_KSOA_Interface.Controllers
                                              taxRate = q.shlv,
                                              withtaxPrice = q.hshjj,
                                              commonName = q.tongym
-                                         }));
+                                         }))).AsNoTracking();
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
             }
@@ -496,7 +497,7 @@ namespace BIW_KSOA_Interface.Controllers
                 }
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = from q in dbContext.biw_priceOnly
+                    var query = (from q in dbContext.biw_priceOnly
                                 from p in goodsOnlyList
                                 where q.goods_no == p
                                 select new
@@ -508,7 +509,7 @@ namespace BIW_KSOA_Interface.Controllers
                                     mainSupplier = q.mainSupplier.Trim(),
                                     SHLV = string.Empty,
                                     supplierNo = string.Empty
-                                };
+                                }).AsNoTracking();
                     if (goodsWithSupplierList.Count > 0)
                     {
                         List<string> goodsNoList = goodsWithSupplierList.Select(it => it.goodsNo).ToList();
@@ -529,10 +530,10 @@ namespace BIW_KSOA_Interface.Controllers
                                  SHLV = r.shlv.ToString(),
                                  supplierNo = m.danwbh
                              })
-                            ).AsEnumerable();
+                            ).AsNoTracking().AsEnumerable();
                         list = (from q in list
                                join p in goodsWithSupplierList on new { goodsNo = q.goods_no.Trim(), supplierNo=q.supplierNo.Trim() } equals new { goodsNo=p.goodsNo.Trim(), supplierNo=p.supplierNo.Trim() }
-                               select q).ToList();
+                               select q);
                         jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(list) };
                     }
                     else
@@ -573,9 +574,9 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = from q in dbContext.biw_suppliergoods
+                    var query = (from q in dbContext.biw_suppliergoods
                                 where q.supplier_no != null && msgModel.Body.supplierNo.Equals(q.supplier_no)
-                                select q;
+                                select q).AsNoTracking();
                     if (msgModel.Body.goodsNo != null && msgModel.Body.goodsNo.Count() > 0)
                     {
                         query = query.Where(it => msgModel.Body.goodsNo.Contains(it.goodsNo));
@@ -621,12 +622,12 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    string[] goodsIDList = (from q in dbContext.spkfks
-                                            where msgModel.Body.goodsId.Contains(q.spbh)
-                                            select new { q.spid }).Select(it => it.spid).ToArray();
-                    var query = from q in dbContext.biw_data
-                                where goodsIDList.Contains(q.spid)
-                                select q;
+                    //string[] goodsIDList = (from q in dbContext.spkfks
+                    //                        where msgModel.Body.goodsId.Contains(q.spbh)
+                    //                        select new { q.spid }).Select(it => it.spid).ToArray();
+                    var query = (from q in dbContext.biw_data
+                                where msgModel.Body.goodsId.Contains(q.spid)
+                                select q).AsNoTracking();
                     jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
                 }
             }
@@ -655,16 +656,16 @@ namespace BIW_KSOA_Interface.Controllers
             if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) || msgModel.Body.pageSize <= 0 || msgModel.Body.pageNo < 0)
             {
                 jr.Data = new ResultMessage.ParamError();
-                Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.Page size and page no must greater than 0.");
+                Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.Page size and number must greater than 0.");
                 return jr;
             }
             try
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = from q in dbContext.biw_suppliergoods
+                    var query = (from q in dbContext.biw_suppliergoods
                                 where q.supplier_no == msgModel.Body.supplierNo
-                                select q;
+                                select q).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsNo))
                         query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo);
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
@@ -705,7 +706,7 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    var query = from q in dbContext.biw_suppliergoods
+                    var query = (from q in dbContext.biw_suppliergoods
                                 select new
                                 {
                                     q.supplier_id,
@@ -716,7 +717,7 @@ namespace BIW_KSOA_Interface.Controllers
                                     q.jsfs,
                                     q.goodsName,
                                     q.goodsNo
-                                };
+                                }).AsNoTracking();
                     switch (msgModel.Body.qryType)
                     {
                         case 1:
@@ -788,9 +789,9 @@ namespace BIW_KSOA_Interface.Controllers
                         jr.Data = new ResultMessage.ParamError() { Body="CategoryNo can not be null when level is 2 or 3 "};
                         return jr;
                     }
-                    var query = from q in dbContext.biw_category
+                    var query = (from q in dbContext.biw_category
                                 where q.level==msgModel.Body.level
-                                select q;
+                                select q).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.category_no))
                         query = query.Where(it=>it.category_no.Contains(msgModel.Body.category_no));
                     jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(query) };
