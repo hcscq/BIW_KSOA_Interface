@@ -10,6 +10,7 @@ using System.Data.Entity.Validation;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data.Entity;
+using System.Web.Mvc;
 
 namespace BIW_KSOA_Interface.Controllers
 {
@@ -249,6 +250,7 @@ namespace BIW_KSOA_Interface.Controllers
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
             KSOANoModel result = null;
+            string ip = Request.UserHostAddress;
             if (msgModel == null || msgModel.Body == null)
             {
                 jr.Data = new ResultMessage.HaveNoData();
@@ -259,12 +261,29 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
-                    dbContext.biw_porders_t.Add(msgModel.Body.GetM());
-                    dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
-                    dbContext.SaveChanges();
+                    var query = (from q in dbContext.biw_porders_t
+                                 where q.poNo.Trim() == msgModel.Body.poNo.Trim()
+                                 select new
+                                 {
+                                     q.poNo,
+                                     poSkno = q.skNo,
+                                     Success = true
+                                 }).AsNoTracking();
+                    if (query.Count()>0)
+                    {
+                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query.First()) };
+                        return jr;
+                    }
+                    else
+                    {
+                        dbContext.biw_porders_t.Add(msgModel.Body.GetM());
+                        for (int i = 0; i < msgModel.Body.dList.Count; i++)
+                            msgModel.Body.dList[i].poNo = msgModel.Body.poNo;
+                        dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
+                        dbContext.SaveChanges();
 
-                    result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
-
+                        result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
+                    }
                 }
             }
             catch (DbEntityValidationException e1)
@@ -577,11 +596,12 @@ namespace BIW_KSOA_Interface.Controllers
                     var query = (from q in dbContext.biw_suppliergoods
                                 where q.supplier_no != null && msgModel.Body.supplierNo.Equals(q.supplier_no)
                                 select q).AsNoTracking();
+                    int count = query.Count();
                     if (msgModel.Body.goodsNo != null && msgModel.Body.goodsNo.Count() > 0)
                     {
                         query = query.Where(it => msgModel.Body.goodsNo.Contains(it.goodsNo));
                     }
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(new { rows=query,total=count }) };
                 }
             }
             catch (Exception e1)
@@ -653,7 +673,7 @@ namespace BIW_KSOA_Interface.Controllers
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) || msgModel.Body.pageSize <= 0 || msgModel.Body.pageNo < 0)
+            if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.supplierNo) || msgModel.Body.pageSize <= 0 || msgModel.Body.pageNo <= 0)
             {
                 jr.Data = new ResultMessage.ParamError();
                 Logger.WriteLog("Model is empty or SupplierNo is Null Or whiteSpace.Page size and number must greater than 0.");
@@ -664,13 +684,14 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.biw_suppliergoods
-                                where q.supplier_no == msgModel.Body.supplierNo
-                                select q).AsNoTracking();
+                                 where q.supplier_no == msgModel.Body.supplierNo
+                                 select q).AsNoTracking();
+                    int count = query.Count();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsNo))
-                        query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo);
+                        query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
-                        query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName));
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query.OrderBy(it=>it.spid).Skip((msgModel.Body.pageNo) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize)) };
+                        query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName)).AsNoTracking();
+                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(new { total = count,rows = query.OrderBy(it => it.spid).Skip((msgModel.Body.pageNo - 1) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize) })  };
                 }
             }
             catch (Exception e1)
@@ -707,42 +728,60 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.biw_suppliergoods
-                                select new
-                                {
-                                    q.supplier_id,
-                                    q.supplier_no,
-                                    q.supplier_name,
-                                    q.rshtqx,
-                                    q.isjh,
-                                    q.jsfs,
-                                    q.goodsName,
-                                    q.goodsNo
-                                }).AsNoTracking();
+                                 select new
+                                 {
+                                     q.supplier_id,
+                                     q.supplier_no,
+                                     q.supplier_name,
+                                     q.rshtqx,
+                                     q.isjh,
+                                     q.jsfs
+                                 }).AsNoTracking();
                     switch (msgModel.Body.qryType)
                     {
                         case 1:
                             if (string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
                                 jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param supplierNo." };
                             else
-                                query = query.Where(it => it.supplier_no == msgModel.Body.supplierNo).Distinct();
+                                query = query.Where(it => it.supplier_no == msgModel.Body.supplierNo).AsNoTracking().Distinct();
                             break;
                         case 2:
                             if (string.IsNullOrWhiteSpace(msgModel.Body.goodsNo))
                                 jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param goodsNo." };
                             else
-                                query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo).Distinct();
+                                query = (from q in dbContext.biw_suppliergoods
+                                         where q.goodsNo == msgModel.Body.goodsNo
+                                         select new
+                                         {
+                                             q.supplier_id,
+                                             q.supplier_no,
+                                             q.supplier_name,
+                                             q.rshtqx,
+                                             q.isjh,
+                                             q.jsfs
+                                         }).AsNoTracking().Distinct();
                             break;
                         case 3:
                             if (string.IsNullOrWhiteSpace(msgModel.Body.supplierName))
                                 jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param supplierName." };
                             else
-                                query = query.Where(it =>it.supplier_name.Contains(msgModel.Body.supplierName)).Distinct();
+                                query = query.Where(it => it.supplier_name.Contains(msgModel.Body.supplierName)).AsNoTracking().Distinct();
                             break;
                         case 4:
                             if (string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
                                 jr.Data = new ResultMessage.ParamError() { Body = "Type " + msgModel.Body.qryType + " need param goodsName." };
                             else
-                                query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName)).Distinct();
+                                query = (from q in dbContext.biw_suppliergoods
+                                         where q.goodsName.Contains(msgModel.Body.goodsName)
+                                         select new
+                                         {
+                                             q.supplier_id,
+                                             q.supplier_no,
+                                             q.supplier_name,
+                                             q.rshtqx,
+                                             q.isjh,
+                                             q.jsfs
+                                         }).AsNoTracking().Distinct();
                             break;
                         default:
                             jr.Data = new ResultMessage.ParamError() { Body = "Unknown param value of 'qry_type'" };
@@ -750,6 +789,7 @@ namespace BIW_KSOA_Interface.Controllers
                     }
                     if (jr.Data == null)
                         jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    
                 }
             }
             catch (Exception e1)

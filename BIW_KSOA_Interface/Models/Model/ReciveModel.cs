@@ -135,7 +135,8 @@ namespace BIW_KSOA_Interface.Models
     [NotMapped]
     public class Biw_PoModel : biw_porders_t
     {
-        public List<biw_porders_d> dList;
+        public List<biw_porders_d> dList { get; set; }
+        public List<biw_porders_d> detailList { get { return dList; } set { dList = value; } }
         public biw_porders_t GetM()
         {
             return new biw_porders_t()

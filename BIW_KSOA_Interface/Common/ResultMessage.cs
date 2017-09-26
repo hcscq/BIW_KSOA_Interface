@@ -81,5 +81,9 @@ namespace BIW_KSOA_Interface.Common
                 Success = false;
             }
         }
+        public class SuccessedWithCount : Successed
+        {
+            public int count { get; set; }
+        }
     }
 }
