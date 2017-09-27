@@ -5,12 +5,12 @@ using System.Web;
 using System.Web.Mvc;
 using BIW_KSOA_Interface.Models;
 using BIW_KSOA_Interface.Common;
-using System.Web.Script.Serialization;
 using System.Data.Entity.Validation;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data.Entity;
 using System.Web.Mvc;
+using Newtonsoft.Json;
 
 namespace BIW_KSOA_Interface.Controllers
 {
@@ -18,7 +18,7 @@ namespace BIW_KSOA_Interface.Controllers
     {
         //
         // GET: /BIW/
-        private JavaScriptSerializer jsr = new JavaScriptSerializer();
+        //private JavaScriptSerializer jsr = new JavaScriptSerializer();
         public ActionResult Index()
         {
             return View();
@@ -95,7 +95,7 @@ namespace BIW_KSOA_Interface.Controllers
                     if (!result.Success)
                     {
                         Logger.WriteLog("Process Error:" + result.Msg);
-                        Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                         jr.Data = new ResultMessage.ProcError() { Body = result.Msg };
                         return jr;
                     }
@@ -104,7 +104,7 @@ namespace BIW_KSOA_Interface.Controllers
                 catch (DbEntityValidationException e1)
                 {
                     jr.Data = new ResultMessage.ProcError() { Message = ResultMessage.GetEntityValidationErrorStr(e1) };
-                    Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                    Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                     return jr;
                 }
                 catch (Exception e1)
@@ -113,11 +113,11 @@ namespace BIW_KSOA_Interface.Controllers
                         e1 = e1.InnerException;
                     jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                     Logger.WriteLog(e1.Message);
-                    Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                    Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                     return jr;
                 }
             }
-            jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(result) };
+            jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(result) };
             return jr;
         }
         /// <summary>
@@ -218,7 +218,7 @@ namespace BIW_KSOA_Interface.Controllers
                     }
                     catch (DbEntityValidationException e1)
                     {
-                        Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
+                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(saveList));
                         resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = ResultMessage.GetEntityValidationErrorStr(e1), Success = false });
                     }
                     catch (Exception e1)
@@ -226,7 +226,7 @@ namespace BIW_KSOA_Interface.Controllers
                         while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
                             e1 = e1.InnerException;
                         Logger.WriteLog(e1.Message);
-                        Logger.WriteLog("Body Data:" + jsr.Serialize(saveList));
+                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(saveList));
                         resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = e1.Message, Success = false });
                     }
                     saveList.Clear();
@@ -234,8 +234,8 @@ namespace BIW_KSOA_Interface.Controllers
             }
 
             if (resultList.Count > 0)
-                jr.Data = new ResultMessage.ProcError() { Body = jsr.Serialize(resultList) };
-            else jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(returnValue) };
+                jr.Data = new ResultMessage.ProcError() { Body =                      JsonConvert.SerializeObject(resultList) };
+            else jr.Data = new ResultMessage.Successed() {Body=                     JsonConvert.SerializeObject(returnValue) };
 
             return jr;
         }
@@ -271,8 +271,13 @@ namespace BIW_KSOA_Interface.Controllers
                                  }).AsNoTracking();
                     if (query.Count()>0)
                     {
-                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query.First()) };
-                        return jr;
+                        var firstItem = query.First();
+                        if (!string.IsNullOrWhiteSpace(firstItem.poSkno))
+                        {
+                            jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(firstItem) };
+                            return jr;
+                        }
+                        result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
                     }
                     else
                     {
@@ -282,6 +287,7 @@ namespace BIW_KSOA_Interface.Controllers
                         dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
                         dbContext.SaveChanges();
 
+
                         result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
                     }
                 }
@@ -289,17 +295,17 @@ namespace BIW_KSOA_Interface.Controllers
             catch (DbEntityValidationException e1)
             {
                 jr.Data = new ResultMessage.ProcError() { Message = ResultMessage.GetEntityValidationErrorStr(e1) };
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             catch (Exception e1)
             {
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
-            jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(result) };
+            jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(result) };
             return jr;
         }
         /// <summary>
@@ -344,7 +350,7 @@ namespace BIW_KSOA_Interface.Controllers
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
                         query = query.Where(it => it.supplier_no.Equals(msgModel.Body.supplierNo.Trim()));
 
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
 
                 }
             }
@@ -354,7 +360,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -384,7 +390,7 @@ namespace BIW_KSOA_Interface.Controllers
                     var query = (from q in dbContext.biw_MSOnly
                                 where (goodsNoArr).Contains(q.spbh)
                                 select q).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -393,7 +399,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -472,7 +478,7 @@ namespace BIW_KSOA_Interface.Controllers
                                              withtaxPrice = q.hshjj,
                                              commonName = q.tongym
                                          }))).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -481,7 +487,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -536,9 +542,23 @@ namespace BIW_KSOA_Interface.Controllers
                         var list = query.Union
                             (
                             (from q in dbContext.biw_priceOnly
+                             join
+                              p in
+                             (
                              from r in dbContext.gsspdybs
                              join m in dbContext.mchks on r.dwbh equals m.dwbh
-                             where (q.goods_id == r.spid) && goodsNoList.Contains(q.goods_no) && supplierNoList.Contains(m.danwbh)
+                             where supplierNoList.Contains(m.danwbh)
+                             select new
+                             {
+                                 r.spid,
+                                 m.danwbh,
+                                 r.shlv
+                             }
+                             )
+                             on q.goods_id equals p.spid
+                             into temp
+                             from t in temp.DefaultIfEmpty()
+                             where  goodsNoList.Contains(q.goods_no) 
                              select new
                              {
                                  q.goods_id,
@@ -546,17 +566,17 @@ namespace BIW_KSOA_Interface.Controllers
                                  q.lastPPrice,
                                  q.retailPrice,
                                  mainSupplier = q.mainSupplier.Trim(),
-                                 SHLV = r.shlv.ToString(),
-                                 supplierNo = m.danwbh
+                                 SHLV = t.shlv.ToString(),
+                                 supplierNo = t.danwbh
                              })
                             ).AsNoTracking().AsEnumerable();
-                        list = (from q in list
-                               join p in goodsWithSupplierList on new { goodsNo = q.goods_no.Trim(), supplierNo=q.supplierNo.Trim() } equals new { goodsNo=p.goodsNo.Trim(), supplierNo=p.supplierNo.Trim() }
-                               select q);
-                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(list) };
+                        //list = (from q in list
+                        //       join p in goodsWithSupplierList on new { goodsNo = q.goods_no.Trim(), supplierNo=q.supplierNo.Trim() } equals new { goodsNo=p.goodsNo.Trim(), supplierNo=p.supplierNo.Trim() }
+                        //       select q);
+                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(list) };
                     }
                     else
-                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -565,7 +585,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -601,7 +621,7 @@ namespace BIW_KSOA_Interface.Controllers
                     {
                         query = query.Where(it => msgModel.Body.goodsNo.Contains(it.goodsNo));
                     }
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(new { rows=query,total=count }) };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(new { rows=query,total=count }) };
                 }
             }
             catch (Exception e1)
@@ -610,7 +630,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -648,7 +668,7 @@ namespace BIW_KSOA_Interface.Controllers
                     var query = (from q in dbContext.biw_data
                                 where msgModel.Body.goodsId.Contains(q.spid)
                                 select q).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -657,7 +677,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -691,7 +711,7 @@ namespace BIW_KSOA_Interface.Controllers
                         query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
                         query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName)).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(new { total = count,rows = query.OrderBy(it => it.spid).Skip((msgModel.Body.pageNo - 1) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize) })  };
+                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(new { total = count,rows = query.OrderBy(it => it.spid).Skip((msgModel.Body.pageNo - 1) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize) })  };
                 }
             }
             catch (Exception e1)
@@ -700,7 +720,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -788,7 +808,7 @@ namespace BIW_KSOA_Interface.Controllers
                             break;
                     }
                     if (jr.Data == null)
-                        jr.Data = new ResultMessage.Successed() { Body = jsr.Serialize(query) };
+                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
                     
                 }
             }
@@ -798,7 +818,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -834,7 +854,7 @@ namespace BIW_KSOA_Interface.Controllers
                                 select q).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.category_no))
                         query = query.Where(it=>it.category_no.Contains(msgModel.Body.category_no));
-                    jr.Data = new ResultMessage.Successed() {Body=jsr.Serialize(query) };
+                    jr.Data = new ResultMessage.Successed() {Body=                     JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -843,7 +863,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" + jsr.Serialize(msgModel.Body));
+                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
