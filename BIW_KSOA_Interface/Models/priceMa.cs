@@ -14,16 +14,16 @@ namespace BIW_KSOA_Interface.Models
         public string shpgg { get; set; }
         public string shpchd { get; set; }
         public string dw { get; set; }
-        public Nullable<decimal> ydj { get; set; }
-        public Nullable<decimal> hshjj { get; set; }
-        public Nullable<decimal> shlv { get; set; }
-        public Nullable<decimal> ndj { get; set; }
-        public Nullable<decimal> zhjj { get; set; }
-        public Nullable<decimal> jjcy { get; set; }
+        public Nullable<float> ydj { get; set; }
+        public Nullable<float> hshjj { get; set; }
+        public Nullable<float> shlv { get; set; }
+        public Nullable<float> ndj { get; set; }
+        public Nullable<float> zhjj { get; set; }
+        public Nullable<float> jjcy { get; set; }
         public string is_zgys { get; set; }
         public string is_del { get; set; }
-        public Nullable<decimal> dj { get; set; }
-        public Nullable<decimal> tmpdj { get; set; }
+        public Nullable<float> dj { get; set; }
+        public Nullable<float> tmpdj { get; set; }
         public string leibei { get; set; }
         public string jsfs { get; set; }
         public string fuzr { get; set; }

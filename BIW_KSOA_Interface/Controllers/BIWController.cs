@@ -95,7 +95,7 @@ namespace BIW_KSOA_Interface.Controllers
                     if (!result.Success)
                     {
                         Logger.WriteLog("Process Error:" + result.Msg);
-                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                        Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                         jr.Data = new ResultMessage.ProcError() { Body = result.Msg };
                         return jr;
                     }
@@ -104,7 +104,7 @@ namespace BIW_KSOA_Interface.Controllers
                 catch (DbEntityValidationException e1)
                 {
                     jr.Data = new ResultMessage.ProcError() { Message = ResultMessage.GetEntityValidationErrorStr(e1) };
-                    Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                    Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                     return jr;
                 }
                 catch (Exception e1)
@@ -113,11 +113,11 @@ namespace BIW_KSOA_Interface.Controllers
                         e1 = e1.InnerException;
                     jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                     Logger.WriteLog(e1.Message);
-                    Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                    Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                     return jr;
                 }
             }
-            jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(result) };
+            jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(result) };
             return jr;
         }
         /// <summary>
@@ -153,11 +153,11 @@ namespace BIW_KSOA_Interface.Controllers
                         priceMaKsoaModel.gzid = gzid;
                         priceMaKsoaModel.spbh = postList[i].DList[j].goodsNo;
                         priceMaKsoaModel.spmch = postList[i].DList[j].goodsName;
-                        priceMaKsoaModel.hshjj = (decimal)postList[i].DList[j].priceJhNow;
+                        priceMaKsoaModel.hshjj = postList[i].DList[j].priceJhNow;
                         priceMaKsoaModel.is_zgys = ((postList[i].DList[j].isMain == 0) ? "否" : "是");
-                        priceMaKsoaModel.zhjj = (decimal)postList[i].DList[j].priceJhOld;
-                        priceMaKsoaModel.dj = (decimal)postList[i].DList[j].priceLsNow;
-                        priceMaKsoaModel.shlv = (decimal)postList[i].DList[j].taxRateIn;
+                        priceMaKsoaModel.zhjj = postList[i].DList[j].priceJhOld;
+                        priceMaKsoaModel.dj = postList[i].DList[j].priceLsNow;
+                        priceMaKsoaModel.shlv = postList[i].DList[j].taxRateIn;
                         priceMaKsoaModel.orderId = postList[i].priceWhNo;
                         priceMaKsoaModel.dj_sn = j;
                         priceMaKsoaModel.dj_sort = j;
@@ -209,7 +209,7 @@ namespace BIW_KSOA_Interface.Controllers
                         {
                             dbContext.priceMas.AddRange(saveList);
                             dbContext.SaveChanges();
-                            returnValue=dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid", gzid)
+                            returnValue = dbContext.ProcedureQuery("zz_gsspwh_biw", new SqlParameter("@gzid", gzid)
                                                                     , new SqlParameter("@djlxbs", "GSS")
                                                                     , new SqlParameter("@djbh", postList[i].priceWhNo)
                                                                     , new SqlParameter("@rq", DateTime.Now.ToString("yyyy-MM-dd"))
@@ -218,7 +218,7 @@ namespace BIW_KSOA_Interface.Controllers
                     }
                     catch (DbEntityValidationException e1)
                     {
-                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(saveList));
+                        Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(saveList));
                         resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = ResultMessage.GetEntityValidationErrorStr(e1), Success = false });
                     }
                     catch (Exception e1)
@@ -226,7 +226,7 @@ namespace BIW_KSOA_Interface.Controllers
                         while (e1.InnerException != null && e1.Message.Contains("See the inner exception"))
                             e1 = e1.InnerException;
                         Logger.WriteLog(e1.Message);
-                        Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(saveList));
+                        Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(saveList));
                         resultList.Add(new KSOANoModel() { BiwNo = postList[i].priceWhNo, Msg = e1.Message, Success = false });
                     }
                     saveList.Clear();
@@ -234,8 +234,8 @@ namespace BIW_KSOA_Interface.Controllers
             }
 
             if (resultList.Count > 0)
-                jr.Data = new ResultMessage.ProcError() { Body =                      JsonConvert.SerializeObject(resultList) };
-            else jr.Data = new ResultMessage.Successed() {Body=                     JsonConvert.SerializeObject(returnValue) };
+                jr.Data = new ResultMessage.ProcError() { Body = JsonConvert.SerializeObject(resultList) };
+            else jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(returnValue) };
 
             return jr;
         }
@@ -251,10 +251,10 @@ namespace BIW_KSOA_Interface.Controllers
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
             KSOANoModel result = null;
             string ip = Request.UserHostAddress;
-            if (msgModel == null || msgModel.Body == null)
+            if (msgModel == null || msgModel.Body == null||msgModel.Body.dList==null||msgModel.Body.dList.Count<=0)
             {
                 jr.Data = new ResultMessage.HaveNoData();
-                Logger.WriteLog("Model is empty.");
+                Logger.WriteLog("Model is empty or dList is empty.");
                 return jr;
             }
             try
@@ -269,12 +269,12 @@ namespace BIW_KSOA_Interface.Controllers
                                      poSkno = q.skNo,
                                      Success = true
                                  }).AsNoTracking();
-                    if (query.Count()>0)
+                    if (query.Count() > 0)
                     {
                         var firstItem = query.First();
                         if (!string.IsNullOrWhiteSpace(firstItem.poSkno))
                         {
-                            jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(firstItem) };
+                            jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(firstItem) };
                             return jr;
                         }
                         result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
@@ -336,21 +336,21 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.mchks
-                                select new
-                                {
-                                    supplier_id = q.dwbh,
-                                    supplier_no = q.danwbh,
-                                    supplier_name = q.dwmch,
-                                    q.rshtqx,
-                                    q.isjh,
-                                    q.jsfs
-                                }).AsNoTracking();
+                                 select new
+                                 {
+                                     supplier_id = q.dwbh,
+                                     supplier_no = q.danwbh,
+                                     supplier_name = q.dwmch,
+                                     q.rshtqx,
+                                     q.isjh,
+                                     q.jsfs
+                                 }).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierName))
                         query = query.Where(it => it.supplier_name.Contains(msgModel.Body.supplierName.Trim()));
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.supplierNo))
                         query = query.Where(it => it.supplier_no.Equals(msgModel.Body.supplierNo.Trim()));
 
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
 
                 }
             }
@@ -360,7 +360,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -388,9 +388,9 @@ namespace BIW_KSOA_Interface.Controllers
                 {
                     var goodsNoArr = msgModel.Body.Select(it => it.goodsNo.Trim()).ToArray();
                     var query = (from q in dbContext.biw_MSOnly
-                                where (goodsNoArr).Contains(q.spbh)
-                                select q).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
+                                 where (goodsNoArr).Contains(q.spbh)
+                                 select q).AsNoTracking();
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -399,13 +399,14 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
         }
         /// <summary>
         /// 商品信息 批量查询
+        /// {"action":"multi_qry_goods","body":[{goodsNo:"204010094"},{goodsNo:"204010105"},{goodsNo:"204010145"},{goods_name:"test3"},{goodsNo:"204020036"}]}
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
@@ -439,25 +440,25 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = ((from q in dbContext.spkfks
-                                     //from p in goodsNoArr
-                                 where goodsNoArr.Contains(q.spbh)//q.spbh== p//
-                                 select new
-                                 {
-                                     q.spid,
-                                     goodsNo = q.spbh,
-                                     goodsName = q.spmch,
-                                     category1No = q.yjfl.Trim(),
-                                     category2No = q.ejfl.Trim(),
-                                     category3No = q.sjfl.Trim(),
-                                     originPlace = q.shpchd.Trim(),
-                                     goodsSpec = q.shpgg,
-                                     producer = q.shengccj,
-                                     packageunit = q.dw,
-                                     goodsPrice = q.jj,
-                                     taxRate = q.shlv,
-                                     withtaxPrice = q.hshjj,
-                                     commonName = q.tongym
-                                 })
+                                      //from p in goodsNoArr
+                                  where goodsNoArr.Contains(q.spbh)//q.spbh== p//
+                                  select new
+                                  {
+                                      q.spid,
+                                      goodsNo = q.spbh,
+                                      goodsName = q.spmch,
+                                      category1No = q.yjfl.Trim(),
+                                      category2No = q.ejfl.Trim(),
+                                      category3No = q.sjfl.Trim(),
+                                      originPlace = q.shpchd.Trim(),
+                                      goodsSpec = q.shpgg,
+                                      producer = q.shengccj,
+                                      packageunit = q.dw,
+                                      goodsPrice = q.jj,
+                                      taxRate = q.shlv,
+                                      withtaxPrice = q.hshjj,
+                                      commonName = q.tongym
+                                  })
                                  .Union((from q in dbContext.spkfks
                                          from p in goodsNameArr
                                          where q.spmch.Contains(p)
@@ -478,7 +479,7 @@ namespace BIW_KSOA_Interface.Controllers
                                              withtaxPrice = q.hshjj,
                                              commonName = q.tongym
                                          }))).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -487,7 +488,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -523,18 +524,18 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.biw_priceOnly
-                                from p in goodsOnlyList
-                                where q.goods_no == p
-                                select new
-                                {
-                                    q.goods_id,
-                                    q.goods_no,
-                                    q.lastPPrice,
-                                    q.retailPrice,
-                                    mainSupplier = q.mainSupplier.Trim(),
-                                    SHLV = string.Empty,
-                                    supplierNo = string.Empty
-                                }).AsNoTracking();
+                                 from p in goodsOnlyList
+                                 where q.goods_no == p
+                                 select new
+                                 {
+                                     q.goods_id,
+                                     q.goods_no,
+                                     q.lastPPrice,
+                                     q.retailPrice,
+                                     mainSupplier = q.mainSupplier.Trim(),
+                                     SHLV = string.Empty,
+                                     supplierNo = string.Empty
+                                 }).AsNoTracking();
                     if (goodsWithSupplierList.Count > 0)
                     {
                         List<string> goodsNoList = goodsWithSupplierList.Select(it => it.goodsNo).ToList();
@@ -542,23 +543,17 @@ namespace BIW_KSOA_Interface.Controllers
                         var list = query.Union
                             (
                             (from q in dbContext.biw_priceOnly
-                             join
-                              p in
+                             join p in
                              (
                              from r in dbContext.gsspdybs
                              join m in dbContext.mchks on r.dwbh equals m.dwbh
                              where supplierNoList.Contains(m.danwbh)
-                             select new
-                             {
-                                 r.spid,
-                                 m.danwbh,
-                                 r.shlv
-                             }
+                             select new { r.spid, m.danwbh, r.shlv }
                              )
                              on q.goods_id equals p.spid
                              into temp
                              from t in temp.DefaultIfEmpty()
-                             where  goodsNoList.Contains(q.goods_no) 
+                             where goodsNoList.Contains(q.goods_no)
                              select new
                              {
                                  q.goods_id,
@@ -573,10 +568,10 @@ namespace BIW_KSOA_Interface.Controllers
                         //list = (from q in list
                         //       join p in goodsWithSupplierList on new { goodsNo = q.goods_no.Trim(), supplierNo=q.supplierNo.Trim() } equals new { goodsNo=p.goodsNo.Trim(), supplierNo=p.supplierNo.Trim() }
                         //       select q);
-                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(list) };
+                        jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(list) };
                     }
                     else
-                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
+                        jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -585,7 +580,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -614,14 +609,14 @@ namespace BIW_KSOA_Interface.Controllers
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     var query = (from q in dbContext.biw_suppliergoods
-                                where q.supplier_no != null && msgModel.Body.supplierNo.Equals(q.supplier_no)
-                                select q).AsNoTracking();
+                                 where q.supplier_no != null && msgModel.Body.supplierNo.Equals(q.supplier_no)
+                                 select q).AsNoTracking();
                     int count = query.Count();
                     if (msgModel.Body.goodsNo != null && msgModel.Body.goodsNo.Count() > 0)
                     {
                         query = query.Where(it => msgModel.Body.goodsNo.Contains(it.goodsNo));
                     }
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(new { rows=query,total=count }) };
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(new { rows = query, total = count }) };
                 }
             }
             catch (Exception e1)
@@ -630,7 +625,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -652,7 +647,7 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
-            if ( msgModel.Body.goodsId == null||msgModel.Body.goodsId.Count<=0)
+            if (msgModel.Body.goodsId == null || msgModel.Body.goodsId.Count <= 0)
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("GoodsNo array needed.");
@@ -666,9 +661,9 @@ namespace BIW_KSOA_Interface.Controllers
                     //                        where msgModel.Body.goodsId.Contains(q.spbh)
                     //                        select new { q.spid }).Select(it => it.spid).ToArray();
                     var query = (from q in dbContext.biw_data
-                                where msgModel.Body.goodsId.Contains(q.spid)
-                                select q).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
+                                 where msgModel.Body.goodsId.Contains(q.spid)
+                                 select q).AsNoTracking();
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -677,7 +672,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -711,7 +706,7 @@ namespace BIW_KSOA_Interface.Controllers
                         query = query.Where(it => it.goodsNo == msgModel.Body.goodsNo).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.goodsName))
                         query = query.Where(it => it.goodsName.Contains(msgModel.Body.goodsName)).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(new { total = count,rows = query.OrderBy(it => it.spid).Skip((msgModel.Body.pageNo - 1) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize) })  };
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(new { total = count, rows = query.OrderBy(it => it.spid).Skip((msgModel.Body.pageNo - 1) * msgModel.Body.pageSize).Take(msgModel.Body.pageSize) }) };
                 }
             }
             catch (Exception e1)
@@ -720,7 +715,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
@@ -808,8 +803,8 @@ namespace BIW_KSOA_Interface.Controllers
                             break;
                     }
                     if (jr.Data == null)
-                        jr.Data = new ResultMessage.Successed() { Body =                      JsonConvert.SerializeObject(query) };
-                    
+                        jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
+
                 }
             }
             catch (Exception e1)
@@ -818,7 +813,7 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
             return jr;
@@ -834,7 +829,7 @@ namespace BIW_KSOA_Interface.Controllers
         {
             JsonResult jr = new JsonResult();
             jr.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-            if (msgModel == null || msgModel.Body == null ||string.IsNullOrWhiteSpace(msgModel.Body.level))
+            if (msgModel == null || msgModel.Body == null || string.IsNullOrWhiteSpace(msgModel.Body.level))
             {
                 jr.Data = new ResultMessage.HaveNoData();
                 Logger.WriteLog("Model is empty or Level is Null Or whiteSpace.");
@@ -846,15 +841,15 @@ namespace BIW_KSOA_Interface.Controllers
                 {
                     if ((msgModel.Body.level.Equals("2") || msgModel.Body.level.Equals("3")) && string.IsNullOrWhiteSpace(msgModel.Body.category_no))
                     {
-                        jr.Data = new ResultMessage.ParamError() { Body="CategoryNo can not be null when level is 2 or 3 "};
+                        jr.Data = new ResultMessage.ParamError() { Body = "CategoryNo can not be null when level is 2 or 3 " };
                         return jr;
                     }
                     var query = (from q in dbContext.biw_category
-                                where q.level==msgModel.Body.level
-                                select q).AsNoTracking();
+                                 where q.level == msgModel.Body.level
+                                 select q).AsNoTracking();
                     if (!string.IsNullOrWhiteSpace(msgModel.Body.category_no))
-                        query = query.Where(it=>it.category_no.Contains(msgModel.Body.category_no));
-                    jr.Data = new ResultMessage.Successed() {Body=                     JsonConvert.SerializeObject(query) };
+                        query = query.Where(it => it.category_no.Contains(msgModel.Body.category_no));
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
             }
             catch (Exception e1)
@@ -863,12 +858,11 @@ namespace BIW_KSOA_Interface.Controllers
                     e1 = e1.InnerException;
                 jr.Data = new ResultMessage.ProcError() { Message = e1.Message };
                 Logger.WriteLog(e1.Message);
-                Logger.WriteLog("Body Data:" +                      JsonConvert.SerializeObject(msgModel.Body));
+                Logger.WriteLog("Body Data:" + JsonConvert.SerializeObject(msgModel.Body));
                 return jr;
             }
 
             return jr;
         }
-
     }
 }

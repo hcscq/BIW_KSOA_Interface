@@ -232,5 +232,4 @@ namespace BIW_KSOA_Interface.Models
     public class BiwQryGoodsCategoryModel:biw_category
     {        
     }
-    
 }

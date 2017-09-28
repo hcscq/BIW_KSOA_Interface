@@ -70,6 +70,8 @@ namespace BIW_KSOA_Interface.Models.Mapping
             this.Property(t => t.orderId)
                 .HasMaxLength(50);
 
+            //this.Property(t => t.dj).HasPrecision(18, 10);
+
             // Table & Column Mappings
             this.ToTable("priceMa");
             this.Property(t => t.gzid).HasColumnName("gzid");
