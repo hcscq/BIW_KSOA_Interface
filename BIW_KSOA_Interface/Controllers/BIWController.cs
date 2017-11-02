@@ -441,7 +441,7 @@ namespace BIW_KSOA_Interface.Controllers
                 {
                     var query = ((from q in dbContext.spkfks
                                       //from p in goodsNoArr
-                                  where goodsNoArr.Contains(q.spbh)//q.spbh== p//
+                                  where goodsNoArr.Contains(q.spbh)&& q.beactive.Trim().Equals("是")//q.spbh== p//
                                   select new
                                   {
                                       q.spid,
