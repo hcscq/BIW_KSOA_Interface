@@ -657,11 +657,14 @@ namespace BIW_KSOA_Interface.Controllers
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
+                    dbContext.Database.CommandTimeout = 120;
+                    
                     //string[] goodsIDList = (from q in dbContext.spkfks
                     //                        where msgModel.Body.goodsId.Contains(q.spbh)
-                    //                        select new { q.spid }).Select(it => it.spid).ToArray();
+                    //                        select new { q.spid }).AsNoTracking().Select(it => it.spid).ToArray();
                     var query = (from q in dbContext.biw_data
-                                 where msgModel.Body.goodsId.Contains(q.spid)
+                                 join p in msgModel.Body.goodsId on q.spid.Trim() equals p.Trim()
+                                 //where msgModel.Body.goodsId.Contains(q.spid)
                                  select q).AsNoTracking();
                     jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
                 }
@@ -679,7 +682,7 @@ namespace BIW_KSOA_Interface.Controllers
         }
         /// <summary>
         /// 查询供应商商品信息 分页模式
-        /// {"Action":"getGoodsInfo","Key":"TG0001","Time":"2017-08-22","Body":{"supplierNo":"051","goodsName":"云","pageNo":0,"pageSize":10}}
+        /// {"Action":"qry_goods","Key":"TG0001","Time":"2017-08-22","Body":{"supplierNo":"051","goodsName":"云","pageNo":0,"pageSize":10}}
         /// </summary>
         /// <param name="msgModel"></param>
         /// <returns></returns>
