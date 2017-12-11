@@ -227,6 +227,7 @@ namespace BIW_KSOA_Interface.Models
     public class BiwQryGoodsWitnMSModel
     {
         public List<string> goodsId { get; set; }
+        public List<string> goodsNo { get; set; }
     }
     [NotMapped]
     public class BiwQryGoodsCategoryModel:biw_category

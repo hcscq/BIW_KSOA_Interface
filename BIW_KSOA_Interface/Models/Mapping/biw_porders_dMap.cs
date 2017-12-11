@@ -26,6 +26,9 @@ namespace BIW_KSOA_Interface.Models.Mapping
             this.Property(t => t.poNo).HasColumnName("poNo");
             this.Property(t => t.did).HasColumnName("did");
             this.Property(t => t.spid).HasColumnName("spid");
+
+            this.Property(t => t.goodsNo).HasColumnName("goodsNo");
+
             this.Property(t => t.goodsPrice).HasColumnName("goodsPrice");
             this.Property(t => t.goodsQty).HasColumnName("goodsQty");
             this.Property(t => t.goodsAmount).HasColumnName("goodsAmount");

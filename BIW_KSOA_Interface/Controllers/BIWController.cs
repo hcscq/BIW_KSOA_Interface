@@ -282,6 +282,7 @@ namespace BIW_KSOA_Interface.Controllers
                     else
                     {
                         dbContext.biw_porders_t.Add(msgModel.Body.GetM());
+                        
                         for (int i = 0; i < msgModel.Body.dList.Count; i++)
                             msgModel.Body.dList[i].poNo = msgModel.Body.poNo;
                         dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
@@ -533,7 +534,7 @@ namespace BIW_KSOA_Interface.Controllers
                                      q.lastPPrice,
                                      q.retailPrice,
                                      mainSupplier = q.mainSupplier.Trim(),
-                                     SHLV = string.Empty,
+                                     taxRateIn = string.Empty,
                                      supplierNo = string.Empty
                                  }).AsNoTracking();
                     if (goodsWithSupplierList.Count > 0)
@@ -548,7 +549,7 @@ namespace BIW_KSOA_Interface.Controllers
                              from r in dbContext.gsspdybs
                              join m in dbContext.mchks on r.dwbh equals m.dwbh
                              where supplierNoList.Contains(m.danwbh)
-                             select new { r.spid, m.danwbh, r.shlv }
+                             select new { r.spid, m.danwbh,  r.shlv }
                              )
                              on q.goods_id equals p.spid
                              into temp
@@ -561,7 +562,7 @@ namespace BIW_KSOA_Interface.Controllers
                                  q.lastPPrice,
                                  q.retailPrice,
                                  mainSupplier = q.mainSupplier.Trim(),
-                                 SHLV = t.shlv.ToString(),
+                                 taxRateIn = t.shlv.ToString(),
                                  supplierNo = t.danwbh
                              })
                             ).AsNoTracking().AsEnumerable();
@@ -634,7 +635,7 @@ namespace BIW_KSOA_Interface.Controllers
         /// <summary>
         /// 商品库存查询 +移动月销量 +待入数量
         /// </summary>
-        /// <param name="msgModel"></param>
+        /// <param name="msgModel">商品ID数据或商品编号数组</param>
         /// <returns></returns>
         [HttpPost]
         public JsonResult getGoodsInfo(PostMessage.BiwQryGoodsWS msgModel)
@@ -647,26 +648,41 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
-            if (msgModel.Body.goodsId == null || msgModel.Body.goodsId.Count <= 0)
+            if (((msgModel.Body.goodsId == null&&msgModel.Body.goodsNo==null) || ((msgModel.Body.goodsId != null && msgModel.Body.goodsNo == null)&&msgModel.Body.goodsId.Count <= 0)
+                || ((msgModel.Body.goodsNo != null && msgModel.Body.goodsId == null) && msgModel.Body.goodsNo.Count <= 0)))
             {
                 jr.Data = new ResultMessage.HaveNoData();
-                Logger.WriteLog("GoodsNo array needed.");
+                Logger.WriteLog("GoodsNo or GoodsID array needed.");
                 return jr;
             }
+            List<string> condition = null;
             try
             {
                 using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
                 {
                     dbContext.Database.CommandTimeout = 120;
-                    
-                    //string[] goodsIDList = (from q in dbContext.spkfks
-                    //                        where msgModel.Body.goodsId.Contains(q.spbh)
-                    //                        select new { q.spid }).AsNoTracking().Select(it => it.spid).ToArray();
+
+                    if (((msgModel.Body.goodsId != null) && msgModel.Body.goodsId.Count > 0))
+                        condition = msgModel.Body.goodsId;
+                    else if (((msgModel.Body.goodsNo != null) && msgModel.Body.goodsNo.Count > 0))
+                        condition = (from q in dbContext.spkfks
+                                     where msgModel.Body.goodsNo.Contains(q.spbh)
+                                     select new { q.spid }).AsNoTracking().Select(it => it.spid).ToList();
                     var query = (from q in dbContext.biw_data
-                                 join p in msgModel.Body.goodsId on q.spid.Trim() equals p.Trim()
-                                 //where msgModel.Body.goodsId.Contains(q.spid)
+                                 join p in condition on q.spid.Trim() equals p.Trim()
                                  select q).AsNoTracking();
-                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query) };
+                    var query1 = (from q in query
+                                  join p in dbContext.spkfks on q.spid.Trim() equals p.spid.Trim()
+                                  select new
+                                  {
+                                      spid = q.spid,
+                                      monthsale = q.monthsale,
+                                      zhjj = q.zhjj,
+                                      stock = q.stock,
+                                      drshl = q.drshl,
+                                      goodsNo = p.spbh.Trim()
+                                  }).AsNoTracking();
+                    jr.Data = new ResultMessage.Successed() { Body = JsonConvert.SerializeObject(query1) };
                 }
             }
             catch (Exception e1)

@@ -8,6 +8,9 @@ namespace BIW_KSOA_Interface.Models
         public string poNo { get; set; }
         public int did { get; set; }
         public string spid { get; set; }
+
+        public string goodsNo { get; set; }
+
         public Nullable<decimal> goodsPrice { get; set; }
         public Nullable<decimal> goodsQty { get; set; }
         public Nullable<decimal> goodsAmount { get; set; }

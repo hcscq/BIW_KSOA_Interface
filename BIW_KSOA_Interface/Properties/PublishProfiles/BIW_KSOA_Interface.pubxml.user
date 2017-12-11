@@ -11,7 +11,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
   </PropertyGroup>
   <ItemGroup>
     <File Include="bin/BIW_KSOA_Interface.dll">
-      <publishTime>11/03/2017 18:25:22</publishTime>
+      <publishTime>12/11/2017 15:35:48</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>08/22/2017 10:44:11</publishTime>
