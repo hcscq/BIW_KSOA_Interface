@@ -10,5 +10,7 @@ namespace BIW_KSOA_Interface.Models
         public Nullable<decimal> retailPrice { get; set; }
         public Nullable<decimal> lastPPrice { get; set; }
         public string mainSupplier { get; set; }
+
+        public float shlv { get; set; }
     }
 }
