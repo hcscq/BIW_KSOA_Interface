@@ -31,6 +31,7 @@ namespace BIW_KSOA_Interface.Models.Mapping
             this.Property(t => t.retailPrice).HasColumnName("retailPrice");
             this.Property(t => t.lastPPrice).HasColumnName("lastPPrice");
             this.Property(t => t.mainSupplier).HasColumnName("mainSupplier");
+            this.Property(t => t.memberPrice).HasColumnName("memberPrice");
         }
     }
 }

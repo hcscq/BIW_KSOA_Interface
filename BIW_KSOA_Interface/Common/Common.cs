@@ -8,6 +8,9 @@ namespace BIW_KSOA_Interface.Common
 {
     public  class Common
     {
+        public enum COMPANY_CODE{QLK_GZ,QLK_WL }
+        public const string STR_COMPANY_QLKGZ = "7LK_GZ";
+        public const string STR_COMPANY_QLKWL = "7LK_XDWL";
         public static InsiderPrice[] insiderFavourInfo = new InsiderPrice[]
     {
             new InsiderPrice
@@ -177,6 +180,17 @@ namespace BIW_KSOA_Interface.Common
             }
             return true;
         }
+        public static string GetConnectionName(Biw_BasePostMsgModel msgModel)
+        {
+            if (msgModel != null && !string.IsNullOrWhiteSpace(msgModel.CompanyNo))
+            {
+                if (msgModel.CompanyNo.Trim().Equals(STR_COMPANY_QLKGZ))
+                    return "Name=BIW_KSOAContext";
+                if (msgModel.CompanyNo.Trim().Equals(STR_COMPANY_QLKWL))
+                    return "Name=BIW_WLKSOAContext";
+            }
+            return null;
+        }
     }
     public static class MessageId
     {
@@ -190,6 +204,7 @@ namespace BIW_KSOA_Interface.Common
         public string Action { get; set; }
         public string Key { get; set; }
         public DateTime Time { get; set; }
+        public string CompanyNo { get; set; }
         //public object Body { get; set; }
     }
     public partial class Biw_ResultMsgModel

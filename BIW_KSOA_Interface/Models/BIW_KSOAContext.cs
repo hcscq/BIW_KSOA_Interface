@@ -14,8 +14,8 @@ namespace BIW_KSOA_Interface.Models
             Database.SetInitializer<BIW_KSOAContext>(null);
         }
 
-        public BIW_KSOAContext()
-            : base("Name=BIW_KSOAContext")
+        public BIW_KSOAContext(string csname= "Name=BIW_KSOAContext")
+            : base(csname)
         {
         }
 

@@ -85,5 +85,14 @@ namespace BIW_KSOA_Interface.Common
         {
             public int count { get; set; }
         }
+
+        public class CompanyCodeError : Biw_ResultMsgModel
+        {
+            public CompanyCodeError()
+            {
+                Message = "公司编号有误.";
+                Success = false;
+            }
+        }
     }
 }

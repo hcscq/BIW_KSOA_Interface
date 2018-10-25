@@ -23,6 +23,7 @@ namespace BIW_KSOA_Interface.Controllers
         {
             return View();
         }
+
         #region Header + Body(String) Mode ---Common Accept
         //[HttpPost]
         //public JsonResult Biw(Biw_PostMsgModel msgModel)
@@ -136,8 +137,18 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty.");
                 return jr;
             }
+            //*******Debug begin
+            Logger.WriteLog(JsonConvert.SerializeObject(msgModel.Body));
+            //*******Debug end
             List<priceMa> saveList = new List<priceMa>();
             List<Biw_PriceMaBiwMModel> postList = msgModel.Body;
+            string connectionName = Common.Common.GetConnectionName(msgModel);
+            if (string.IsNullOrWhiteSpace(connectionName))
+            {
+                jr.Data = new ResultMessage.CompanyCodeError();
+
+                return jr;
+            }
             string gzid;
             Random random = new Random();
             List<KSOANoModel> resultList = new List<KSOANoModel>();
@@ -205,7 +216,7 @@ namespace BIW_KSOA_Interface.Controllers
                     }
                     try
                     {
-                        using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                        using (BIW_KSOAContext dbContext = new BIW_KSOAContext(connectionName))
                         {
                             dbContext.priceMas.AddRange(saveList);
                             dbContext.SaveChanges();
@@ -257,9 +268,16 @@ namespace BIW_KSOA_Interface.Controllers
                 Logger.WriteLog("Model is empty or dList is empty.");
                 return jr;
             }
+            string connectionName = Common.Common.GetConnectionName(msgModel);
+            if (string.IsNullOrWhiteSpace(connectionName))
+            {
+                jr.Data = new ResultMessage.CompanyCodeError();
+
+                return jr;
+            }
             try
             {
-                using (BIW_KSOAContext dbContext = new BIW_KSOAContext())
+                using (BIW_KSOAContext dbContext = new BIW_KSOAContext(connectionName))
                 {
                     var query = (from q in dbContext.biw_porders_t
                                  where q.poNo.Trim() == msgModel.Body.poNo.Trim()
@@ -287,6 +305,7 @@ namespace BIW_KSOA_Interface.Controllers
                             msgModel.Body.dList[i].poNo = msgModel.Body.poNo;
                         dbContext.biw_porders_d.AddRange(msgModel.Body.dList);
                         dbContext.SaveChanges();
+
 
 
                         result = dbContext.ProcedureQuery<KSOANoModel>("sbp_biw_porders @poNo='" + msgModel.Body.poNo + "'").First();
@@ -529,6 +548,7 @@ namespace BIW_KSOA_Interface.Controllers
                                  where q.goods_no == p
                                  select new
                                  {
+                                     q.memberPrice,
                                      q.goods_id,
                                      q.goods_no,
                                      q.lastPPrice,
@@ -557,6 +577,7 @@ namespace BIW_KSOA_Interface.Controllers
                              where goodsNoList.Contains(q.goods_no)
                              select new
                              {
+                                 q.memberPrice,
                                  q.goods_id,
                                  q.goods_no,
                                  q.lastPPrice,

@@ -11,7 +11,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
   </PropertyGroup>
   <ItemGroup>
     <File Include="bin/BIW_KSOA_Interface.dll">
-      <publishTime>12/11/2017 15:35:48</publishTime>
+      <publishTime>10/10/2018 18:52:42</publishTime>
+    </File>
+    <File Include="bin/BIW_KSOA_Interface.pdb">
+      <publishTime>10/10/2018 18:52:42</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>08/22/2017 10:44:11</publishTime>
@@ -65,7 +68,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>08/22/2017 10:35:44</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>11/03/2017 14:28:16</publishTime>
+      <publishTime>06/08/2018 15:31:39</publishTime>
     </File>
   </ItemGroup>
 </Project>
